@@ -20,18 +20,6 @@ window.Home = (function () {
     }, 2800);
   }
 
-  function photo(g) {
-    const img = App.$("glacier-photo"), ph = App.$("photo-placeholder");
-    const path = `img/gletscher/${g.id}.jpg`;
-    App.$("photo-path").textContent = path;
-    App.$("photo-caption").textContent = `${g.name} · Kanton ${g.canton}`;
-    img.alt = "Foto " + g.name;
-    img.hidden = true; ph.hidden = false;
-    img.onload = () => { img.hidden = false; ph.hidden = true; };
-    img.onerror = () => { img.hidden = true; ph.hidden = false; };
-    img.src = path;
-  }
-
   function onRoute(s) {
     const mode = s.page === "home" ? s.mode : null;
     page.classList.remove("state-overview", "state-cube", "state-glacier");
@@ -41,7 +29,6 @@ window.Home = (function () {
     if (mode === "glacier") {
       const g = App.glacierById(s.glacier);
       App.$("t-glacier-name").textContent = g.name;
-      photo(g);
     }
     // Zeitleiste: im Cube-Modus läuft sie von selbst
     if (mode === "cube" && lastMode !== "cube") Timeline.play({ loop: true, fromStart: lastMode === "overview" });

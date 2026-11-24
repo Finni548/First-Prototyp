@@ -10,8 +10,7 @@
    ========================================================================= */
 window.CubeView = (function () {
   const D = GLACIER_DATA;
-  const LAYER_YEARS = [1985, 2000, 2015, 2026];
-  let stage, ice, labels, stack = null, stackId = null;
+  let stage, ice, labels;
   let spin = 0.45, spinTarget = 0.45, opening = false;
   let hoverYear = null;
   const pinned = new Set();
@@ -22,7 +21,7 @@ window.CubeView = (function () {
   const CAM = {
     overview: { theta: 0.6, phi: 1.1, radius: 13.5, target: [0, 1.85, 0], shift: 0 },
     cube:     { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0.0 },
-    glacier:  { theta: 0.38, phi: 1.3, radius: 18.5, target: [0, 2.35, 0], shift: 0.08 }
+    glacier:  { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0 }
   };
 
   const lit = () => [...pinned, ...(hoverYear ? [hoverYear] : [])];
@@ -106,61 +105,13 @@ window.CubeView = (function () {
     ySvg.innerHTML = svg;
   }
 
-  // ---------------- Gletscher-Layers (glacier) ----------------
-  function buildStack(g) {
-    if (stack) { stage.scene.remove(stack.group); stack = null; }
-    const group = new THREE.Group();
-    const dLon = 0.2, dLat = 0.13, GAP = 1.55;
-    const box = { lon0: g.lon - dLon, lon1: g.lon + dLon, lat0: g.lat - dLat, lat1: g.lat + dLat };
-    let minE = 1e9;
-    for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++)
-      minE = Math.min(minE, Scene3D.elevAt(box.lon0 + (box.lon1 - box.lon0) * i / 10, box.lat0 + (box.lat1 - box.lat0) * j / 10));
-    const layers = LAYER_YEARS.map((yr, i) => {
-      const r = Scene3D.buildRelief({ ...box, nx: 120, width: 6.4, vscale: 1.45, floor: minE - 150, base: 0, glass: false, shadow: false,
-                                      border: false, iceExag: 1.9, outsideFade: false, glacierMargin: 0, iceAlt: [1900, 2800], iceAltFloor: 0 });
-      r.setYear(yr);
-      r.group.position.y = i * GAP;
-      r.glaciers.forEach((o) => {
-        const own = o.g.id === g.id, a = D.area(o.g, yr);
-        if (a <= 0) return;
-        const core = Scene3D.makeCore(own ? 0.5 : 0.2, own ? 0.07 : 0.032);
-        core.scale.y = Math.max(0.15, a / o.g.a1973);
-        core.position.set(o.x, o.y, o.z);
-        r.group.add(core);
-      });
-      const frame = Scene3D.ringLine(3.2 + 0.02, r.DEP / 2 + 0.02, 0.002, Scene3D.C.ink, 0.25);
-      r.group.add(frame);
-      group.add(r.group);
-      return { yr, r, frame, own: r.glaciers.find((o) => o.g.id === g.id) };
-    });
-    group.add(Scene3D.glassBox(6.7, (LAYER_YEARS.length - 1) * GAP + 1.25, layers[0].r.DEP + 0.3, -0.06, 0.3, 0.1));
-    group.add(Scene3D.groundShadow(11, 9, -0.07));
-    group.visible = false;
-    stage.scene.add(group);
-    stack = { group, layers, g };
-    stackId = g.id;
-  }
-  function stackLabels() {
-    const v = new THREE.Vector3(), g = stack.g;
-    labels.set(stack.layers.map((L) => ({
-      id: "y" + L.yr, name: String(L.yr), rank: L.yr,
-      pos: () => L.r.group.localToWorld(v.set(L.own ? L.own.x : 0, (L.own ? L.own.y : 0.5) + 0.55 * Math.max(0.15, D.area(g, L.yr) / g.a1973), L.own ? L.own.z : 0)).clone(),
-      val: () => { const a = D.area(g, L.yr); return a > 0 ? App.fmt(a) + " km² · Bohrkern" : "verschwunden"; },
-      gone: () => D.area(g, L.yr) <= 0
-    })));
-  }
-  function activeLayerYear() { let b = LAYER_YEARS[0]; LAYER_YEARS.forEach((y) => { if (y <= App.state.year) b = y; }); return b; }
-
   // ---------------- Zustände ----------------
   function setMode(mode) {
     ice.group.visible = mode !== "glacier";
+    stage.active = App.state.page === "home" && mode !== "glacier";
     cores.forEach((c) => (c.mesh.visible = mode === "cube"));
-    if (mode === "glacier") {
-      const g = App.glacierById(App.state.glacier);
-      if (stackId !== g.id) buildStack(g);
-      stack.group.visible = true;
-      stackLabels();
-    } else if (stack) stack.group.visible = false;
+    if (mode === "glacier") { labels.clear(); GlacierView.show(App.glacierById(App.state.glacier)); }
+    else GlacierView.hide();
     if (mode === "cube") cubeLabels();
     if (mode !== "cube") yearLabels();
     if (mode === "overview") { labels.clear(); spinTarget = 0.45; hoverYear = null; }
@@ -175,15 +126,6 @@ window.CubeView = (function () {
     ice.setYear(yr);
     ice.highlight(lit());
     if (App.state.mode === "cube") cubeLabels();
-    if (stack) {
-      const ay = activeLayerYear();
-      stack.layers.forEach((L) => {
-        const on = L.yr === ay;
-        L.frame.material.color.copy(on ? Scene3D.C.blue : Scene3D.C.ink);
-        L.frame.material.opacity = on ? 0.9 : 0.25;
-      });
-      if (App.state.mode === "glacier") labels.refresh("y" + ay);
-    }
   }
 
   // ---------------- Maus: Ebene leuchten lassen / festhalten / Gletscher öffnen ----------------
@@ -228,7 +170,6 @@ window.CubeView = (function () {
       avoid: [".home-title h1", "#info-card", "#pin-bar", "#cube-years .ylab"],
       onClick: (it) => {
         if (App.state.mode === "cube") App.openGlacier(it.id);
-        else if (App.state.mode === "glacier") { Timeline.stop(); App.setYear(+it.name); }
       },
     });
 
@@ -236,7 +177,7 @@ window.CubeView = (function () {
       if (App.state.mode === "overview") { spin += (spinTarget - spin) * Math.min(1, dt * 3); stage.orbit.theta += spin * dt; }
       ice.tick(dt);
       cores.forEach((c) => { c.mesh.position.copy(ice.surfaceAt(c.peak)); c.mesh.scale.y = coreScale(c.g); });
-      if (App.state.mode !== "overview") labels.place(App.state.mode === "glacier" ? "y" + activeLayerYear() : null);
+      if (App.state.mode === "cube") labels.place();
       if (App.state.mode === "cube") placeYears();
     };
     const el = stage.renderer.domElement;

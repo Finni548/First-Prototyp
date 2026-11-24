@@ -13,12 +13,12 @@ Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
    Im Cube liegt jedes Jahr als eigene Eis-Ebene (Zickzack-Rand) übereinander. **Die gemeinte Ebene leuchtet:** das Jahr der Zeitleiste, die Ebene unter der Maus und alle angeklickten (festgehaltenen) Ebenen. „Auswahl löschen“ oben rechts setzt zurück.
    Auf den Gipfeln stehen Bohrkern-Zylinder der grössten Gletscher – Klick öffnet den Gletscher.
    Die **Zeitleiste läuft von selbst** (1970 → 2026, Schleife). Klick auf ein Jahr → sie bleibt dort stehen. ▶ startet sie wieder.
-3. **Klick auf einen Gletscher (Skizze 2B):** Gletscher in Jahres-Layers (1985 · 2000 · 2015 · 2026) übereinander, auf jedem Layer ein Zylinder = Eiskernbohrung. Das Layer zum gewählten Jahr ist blau markiert. Oben links: Foto des Gletschers.
-   Auch über die **Suche** oder per Klick auf der Karte erreichbar.
+3. **Klick auf einen Gletscher → Cutout (Referenzbild):** Foto des Gletschers als Hintergrund, darauf ein Raster-Fenster mit dem **Höhenprofil durch den Gletscher – eine Linie pro Jahr** (hellblau 1970 → orange 2026). Fels schraffiert, Eis des gewählten Jahres hellblau, 1970 gestrichelt. Man sieht, wie die Oberfläche absinkt und die Zunge zurückweicht. Bohrkern-Zylinder stecken im Eis (Länge = Eisdicke). Links eine Datentabelle, rechts die Legende.
+   Gemeinte Linie leuchtet (Jahr der Zeitleiste / Maus), Klick auf eine Linie = Jahr wählen. Erreichbar über Zylinder im Cube, Suche oder Karte.
 4. **↵** unten links geht einen Schritt zurück.
 
 ## Fotos
-In `img/gletscher/` ablegen, Dateiname = Gletscher-ID (z. B. `aletsch.jpg`) – Liste in `img/gletscher/LIES-MICH.txt`.
+In `img/gletscher/` ablegen, Dateiname = Gletscher-ID (z. B. `aletsch.jpg`) – Liste in `img/gletscher/LIES-MICH.txt`. Am besten Querformat, Gletscher eher rechts/unten im Bild (das Daten-Fenster liegt in der Mitte).
 Solange kein Foto da ist, erscheint ein Platzhalter (und die Browser-Konsole meldet die fehlende Datei – das ist normal).
 
 ## Dateien
@@ -31,11 +31,13 @@ Solange kein Foto da ist, erscheint ein Platzhalter (und die Browser-Konsole mel
 | `js/scene.js` | 3D-Kern: Bühne, Relief, Eisblock, Bohrkern, Beschriftungen |
 | `js/main.js` | Zustand & Navigation, Zahlen-Karte, Suche |
 | `js/home.js` | Startseite (Karte, Titel, Zustände) |
-| `js/cubeview.js` | Inhalt des Cubes: Eisblock → Berglandschaft → Gletscher-Layers |
+| `js/cubeview.js` | Cube: Eisblock mit Jahres-Ebenen (klein & gross) |
+| `js/glacierview.js` | Gletscher-Cutout: Foto, Höhenprofile pro Jahr, Bohrkerne, Tabelle |
 | `js/mapview.js` | Karte als eigene Seite |
 | `js/timeline.js` | Zeitleiste (2026 oben, Auto-Play) |
 
 ## Wichtig zu den Daten
 - Gesichert (GLAMOS/SCNAT): 2000 = 74.9 km³, 2024 = 46.5 km³, 2025 −3 %, 2026 −5.5 % → 42.6 km³; 1019 verschwundene Gletscher 1973–2016.
 - Zwischenjahre, Gletscherflächen, Eisflächen-Formen und das Relief sind **geschätzt bzw. schematisch**.
-- Bohrkern-Zylinder sind Platzhalter (Höhe = Flächenanteil), noch keine echten Eiskern-Daten.
+- Bohrkern-Zylinder sind Platzhalter, noch keine echten Eiskern-Daten.
+- Höhenprofile, Eisdicken, Absenkung und Zungenrückzug in der Gletscher-Ansicht sind **aus der Flächenänderung modelliert** – für echte Werte: GLAMOS-Längen- und Dickenmessungen bzw. swisstopo-Höhenmodelle verschiedener Jahre.

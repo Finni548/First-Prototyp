@@ -41,7 +41,7 @@
         <p class="eyebrow" id="home-eyebrow">Data Visualisation · Schweizer Gletscher 1970–2026</p>
         <h1 class="t-overview">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
         <h1 class="t-cube">Alle Gletscher <em id="t-cube-year">2026</em></h1>
-        <h1 class="t-glacier"><span id="t-glacier-name">Gletscher</span> <em>1985–2026</em></h1>
+        <h1 class="t-glacier"><span id="t-glacier-name">Gletscher</span> <em>1970–2026</em></h1>
       </div>
 
       <!-- Karte (bleibt im Cube-Modus blass oben links) -->
@@ -50,21 +50,29 @@
         <span class="panel-tag">Map <span aria-hidden="true">↗</span></span>
       </div>
 
-      <!-- echtes Foto des Gletschers (Gletscher-Modus) -->
-      <figure class="panel panel-photo" id="panel-photo">
-        <img id="glacier-photo" alt="">
-        <div class="photo-placeholder" id="photo-placeholder">
-          <svg viewBox="0 0 300 160" aria-hidden="true"><path d="M0 150 L60 60 L95 100 L140 30 L190 110 L225 70 L300 150Z"/><path class="ice" d="M128 48 C140 70 150 95 175 128 M134 52 C142 78 155 105 168 132 M140 42 C152 66 168 92 186 120"/></svg>
-          <span>Foto einfügen: <code id="photo-path">img/gletscher/aletsch.jpg</code></span>
-        </div>
-        <figcaption id="photo-caption">Foto</figcaption>
-      </figure>
-
       <!-- Der Cube -->
       <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Cube öffnen">
         <div class="panel-stage" id="cube-stage"></div>
         <div class="label-layer" id="cube-labels"></div>
         <div class="year-layer" id="cube-years"><svg></svg></div>
+
+        <!-- Gletscher-Ansicht: Foto + Cutout mit Jahres-Profilen -->
+        <div class="gview" id="gview" hidden>
+          <img class="gv-photo" id="gv-photo" alt="" hidden>
+          <svg class="gv-fallback" id="gv-fallback" aria-hidden="true"></svg>
+          <div class="gv-table" id="gv-table"></div>
+          <div class="gv-cut" id="gv-cut"><svg id="gv-svg"></svg><span class="gv-cut-title">Höhenprofil · eine Linie pro Jahr</span></div>
+          <div class="gv-side">
+            <div class="gv-row"><span>Legende</span><b>Jahres-Ebenen</b></div>
+            <div class="gv-legend"><i></i><span>1970</span><span>2026</span></div>
+            <div class="gv-row"><span>Fels</span><b>schraffiert</b></div>
+            <div class="gv-row"><span>Eis</span><b>gewähltes Jahr</b></div>
+            <div class="gv-row"><span>- - -</span><b>Oberfläche 1970</b></div>
+            <div class="gv-row"><span>Zylinder</span><b>Eiskernbohrung</b></div>
+            <p class="gv-foot">Maus auf eine Linie = sie leuchtet · Klick = Jahr wählen</p>
+            <p class="gv-hint" id="gv-hint"></p>
+          </div>
+        </div>
         <span class="panel-tag">Cube · alle Gletscher <span aria-hidden="true">↗</span></span>
         <p class="cube-hint" id="cube-hint">Maus auf eine Ebene = sie leuchtet · Klick = festhalten · Zylinder = Gletscher öffnen · ziehen = drehen</p>
         <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 Ebene festgehalten</span><button id="pin-clear" type="button">Auswahl löschen</button></div>
@@ -134,6 +142,7 @@
 <script src="js/main.js"></script>
 <script src="js/timeline.js"></script>
 <script src="js/home.js"></script>
+<script src="js/glacierview.js"></script>
 <script src="js/cubeview.js"></script>
 <script src="js/mapview.js"></script>
 <script>App.start();</script>

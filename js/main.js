@@ -34,6 +34,7 @@ window.App = (function () {
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("is-active", p.id === "page-" + state.page));
     document.body.classList.toggle("detail", state.page === "map" || state.mode !== "overview");
     document.body.classList.toggle("on-map", state.page === "map");
+    document.body.classList.toggle("glacier-mode", state.page === "home" && state.mode === "glacier");
     const navKey = state.page === "map" ? "map" : state.mode === "overview" ? "home" : "cube";
     document.querySelectorAll(".main-nav a").forEach((a) => a.classList.toggle("is-active", a.dataset.go === navKey));
     history.replaceState(null, "", "#" + (state.page === "map" ? "map" : state.mode === "glacier" ? "glacier/" + state.glacier : state.mode === "cube" ? "cube" : "home"));
@@ -122,6 +123,7 @@ window.App = (function () {
 
     Timeline.init();
     Home.init();
+    GlacierView.init();
     CubeView.init();
     MapView.init();
 

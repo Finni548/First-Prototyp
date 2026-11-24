@@ -102,7 +102,6 @@ a { color: inherit; text-decoration: none; }
 /* ---- Zustand 1: Übersicht (Skizze 1) ---- */
 .panel-map   { left: var(--pad); top: 150px; width: 61%; height: calc(100% - 150px - 168px); background: var(--bg-2); cursor: pointer; z-index: 2; }
 .panel-cube  { left: calc(100% - var(--pad) - 38%); top: 210px; width: 38%; height: calc(100% - 210px - 24px); background: rgba(238,246,255,.92); cursor: pointer; z-index: 3; }
-.panel-photo { left: var(--pad); top: 110px; width: 28%; height: 30%; opacity: 0; pointer-events: none; z-index: 1; background: var(--bg-3); }
 .panel-map:hover, .panel-cube:hover { border-color: var(--ink); }
 .home-text {
   position: absolute; left: var(--pad); bottom: 24px; width: calc(61% - 40% + 18%); z-index: 2;
@@ -143,16 +142,60 @@ a { color: inherit; text-decoration: none; }
 .state-cube .home-text, .state-glacier .home-text { opacity: 0; transform: translateY(12px); pointer-events: none; }
 .state-cube .back-btn, .state-glacier .back-btn { opacity: 1; pointer-events: auto; }
 
-/* ---- Zustand 3: ein Gletscher, echtes Foto oben links (Skizze 2B) ---- */
-.state-glacier .panel-photo { opacity: 1; pointer-events: auto; top: 112px; width: 24%; height: 32%; z-index: 2; }
-.state-glacier .panel-cube { left: 24%; width: calc(76% - var(--pad)); }
-.panel-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.panel-photo figcaption { position: absolute; left: 12px; bottom: 10px; font-size: 11.5px; background: rgba(255,255,255,.88); padding: 4px 9px; border-radius: 20px; }
-.photo-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 11.5px; text-align: center; padding: 16px; }
-.photo-placeholder svg { width: 70%; max-height: 60%; }
-.photo-placeholder svg path { fill: none; stroke: var(--ink-2); stroke-width: 1.2; stroke-linejoin: round; }
-.photo-placeholder svg path.ice { stroke: #5aa9e6; }
-.photo-placeholder code { font-size: 11px; color: var(--ink-2); }
+/* ---- Zustand 3: ein Gletscher als Cutout (Referenz: Kristall mit Daten-Fenster) ---- */
+.state-glacier .panel-cube {
+  left: calc(var(--pad) + 68px); top: 120px; width: calc(100% - var(--pad) * 2 - 68px); height: calc(100% - 120px - 18px);
+  background: #0d1117; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: #0d1117;
+}
+.state-glacier #cube-stage, .state-glacier .cube-hint { opacity: 0; pointer-events: none; }
+body.glacier-mode .info-card { opacity: 0 !important; pointer-events: none !important; }
+
+.gview { position: absolute; inset: 0; color: #fff; z-index: 4; animation: gvIn .8s ease; }
+@keyframes gvIn { from { opacity: 0; } to { opacity: 1; } }
+.gv-photo, .gv-fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gview::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(8,10,14,.82) 0%, rgba(8,10,14,.35) 30%, rgba(8,10,14,.15) 70%, rgba(8,10,14,.55) 100%); }
+.gv-table, .gv-cut, .gv-side { position: absolute; z-index: 2; }
+.gv-table { left: 3%; top: 7%; width: 21%; }
+.gv-side  { left: 78.5%; top: 7%; width: 18.5%; }
+.gv-row { display: flex; justify-content: space-between; gap: 10px; border-top: .5px solid rgba(255,255,255,.55); padding: 7px 0 9px; font-size: 11px; line-height: 1.3; }
+.gv-row span { color: rgba(255,255,255,.62); }
+.gv-row b { font-weight: 500; text-align: right; }
+.gv-row.now b { color: #aad1ff; text-shadow: 0 0 10px rgba(77,109,255,.8); }
+.gv-foot { font-size: 10px; color: rgba(255,255,255,.55); line-height: 1.45; margin: 10px 0 0; border-top: .5px solid rgba(255,255,255,.3); padding-top: 8px; }
+.gv-hint { font-size: 10.5px; color: rgba(255,255,255,.75); margin-top: 14px; }
+.gv-hint code { color: #fff; }
+.gv-legend { display: grid; grid-template-columns: 1fr 1fr; padding: 0 0 10px; font-size: 10px; color: rgba(255,255,255,.7); }
+.gv-legend i { grid-column: 1 / -1; height: 5px; margin-bottom: 4px; background: linear-gradient(90deg, #aad1ff, #4d6dff 55%, #be5ac8 80%, #ff783c); }
+.gv-legend span:last-child { text-align: right; }
+
+.gv-cut {
+  left: 26%; top: 7%; width: 50.5%; height: 84%;
+  border: 1px solid rgba(255,255,255,.85);
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(5px) brightness(1.12) saturate(.75); -webkit-backdrop-filter: blur(5px) brightness(1.12) saturate(.75);
+}
+.gv-cut svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gv-cut-title { position: absolute; left: 0; top: -20px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.8); }
+.gv-grid line { stroke: rgba(255,255,255,.13); stroke-width: .5; }
+.gv-axis line { stroke: rgba(255,255,255,.7); stroke-width: .6; }
+.gv-axis text { fill: rgba(255,255,255,.75); font-size: 10px; font-family: var(--sans); }
+.gv-bed { fill: url(#gv-rock); }
+.gv-bedline { fill: none; stroke: rgba(255,255,255,.75); stroke-width: .9; }
+.gv-icefill { fill: rgba(170,209,255,.26); }
+.gv-layer { fill: none; stroke-width: .8; opacity: .8; transition: stroke-width .15s; }
+.gv-layer.key { stroke-width: 1.4; opacity: 1; }
+.gv-layer.lit { stroke-width: 2.6; opacity: 1; }
+.gv-hit { fill: none; stroke: transparent; stroke-width: 9; pointer-events: stroke; cursor: pointer; }
+.gv-1970 { fill: none; stroke: rgba(255,255,255,.85); stroke-width: .8; stroke-dasharray: 4 3; pointer-events: none; }
+.gv-ylab line { stroke: rgba(255,255,255,.6); stroke-width: .5; }
+.gv-ylab text { fill: rgba(255,255,255,.85); font-size: 10.5px; font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.gv-ylab .lit { fill: #fff; stroke: #aad1ff; font-weight: 600; }
+.gv-ylab text.lit { stroke: none; fill: #cfe3ff; filter: drop-shadow(0 0 4px rgba(77,109,255,.9)); }
+.gv-core rect, .gv-core ellipse { fill: rgba(238,246,255,.92); stroke: #2d41d3; stroke-width: .8; }
+.gv-core line { stroke: #2d41d3; stroke-width: .7; }
+.gv-core-lead { stroke: rgba(255,255,255,.6); stroke-width: .5; }
+.gv-cores text { fill: #fff; font-size: 10px; font-family: var(--sans); }
 
 /* ---- feine Beschriftungen ---- */
 .label-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
