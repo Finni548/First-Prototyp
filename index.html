@@ -64,13 +64,15 @@
       <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Cube öffnen">
         <div class="panel-stage" id="cube-stage"></div>
         <div class="label-layer" id="cube-labels"></div>
+        <div class="year-layer" id="cube-years"><svg></svg></div>
         <span class="panel-tag">Cube · alle Gletscher <span aria-hidden="true">↗</span></span>
-        <p class="cube-hint" id="cube-hint">Gletscher anklicken · ziehen zum Drehen</p>
+        <p class="cube-hint" id="cube-hint">Maus auf eine Ebene = sie leuchtet · Klick = festhalten · Zylinder = Gletscher öffnen · ziehen = drehen</p>
+        <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 Ebene festgehalten</span><button id="pin-clear" type="button">Auswahl löschen</button></div>
       </div>
 
       <!-- TEXT -->
       <div class="home-text">
-        <p class="lead">Zwei Wege durch dieselben Daten: die <b>Karte</b> zeigt jeden Gletscher an seinem Ort, der <b>Cube</b> alles Eis zusammen. Klick auf den Cube öffnet die Berglandschaft – die Zeitleiste rechts läuft dann von selbst.</p>
+        <p class="lead">Zwei Wege durch dieselben Daten: die <b>Karte</b> zeigt jeden Gletscher an seinem Ort, der <b>Cube</b> alles Eis zusammen. Klick auf den Cube macht ihn gross: jedes Jahr liegt als eigene Eis-Ebene darin übereinander – die Zeitleiste rechts läuft dann von selbst.</p>
         <div class="mini-stats">
           <div><strong id="st-pct">−50 %</strong><span>Eis seit 1970</span></div>
           <div><strong id="st-vol">42.6 km³</strong><span>übrig im Jahr <b class="yr">2026</b></span></div>

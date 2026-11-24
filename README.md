@@ -9,8 +9,9 @@ Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
 
 ## Ablauf (wie in den Skizzen)
 1. **Übersicht (Skizze 1):** Karte gross links, Cube rechts unten (dreht sich), Text unten links, Suche oben rechts, Zeitleiste rechts mit 2026 oben.
-2. **Klick auf den Cube (Skizze 1B):** Die Drehung stoppt, der Cube wird gross und leicht durchsichtig. Die Karte bleibt blass oben links im Hintergrund.
-   Im Cube: die Berglandschaft der Alpen mit den Gletschern als Eisflächen, Bohrkern-Zylindern und feinen Beschriftungen.
+2. **Klick auf den Cube (Skizze 1B):** Die Drehung stoppt, derselbe blaue Eisblock wird einfach gross (leicht durchsichtig). Die Karte bleibt blass oben links im Hintergrund.
+   Im Cube liegt jedes Jahr als eigene Eis-Ebene (Zickzack-Rand) übereinander. **Die gemeinte Ebene leuchtet:** das Jahr der Zeitleiste, die Ebene unter der Maus und alle angeklickten (festgehaltenen) Ebenen. „Auswahl löschen“ oben rechts setzt zurück.
+   Auf den Gipfeln stehen Bohrkern-Zylinder der grössten Gletscher – Klick öffnet den Gletscher.
    Die **Zeitleiste läuft von selbst** (1970 → 2026, Schleife). Klick auf ein Jahr → sie bleibt dort stehen. ▶ startet sie wieder.
 3. **Klick auf einen Gletscher (Skizze 2B):** Gletscher in Jahres-Layers (1985 · 2000 · 2015 · 2026) übereinander, auf jedem Layer ein Zylinder = Eiskernbohrung. Das Layer zum gewählten Jahr ist blau markiert. Oben links: Foto des Gletschers.
    Auch über die **Suche** oder per Klick auf der Karte erreichbar.

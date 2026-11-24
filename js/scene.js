@@ -355,30 +355,80 @@ window.Scene3D = (function () {
     const iceMat = new THREE.MeshStandardMaterial({ color: 0xcfe7fa, roughness: 0.28, transparent: true, opacity: 0.88, flatShading: true, emissive: 0x2d6fb8, emissiveIntensity: 0.06 });
     const body = new THREE.Group(); body.add(new THREE.Mesh(top, iceMat));
     const sideMat = new THREE.MeshStandardMaterial({ color: 0xb9dcf6, roughness: 0.2, transparent: true, opacity: 0.8, side: THREE.DoubleSide, emissive: 0x2d6fb8, emissiveIntensity: 0.05 });
-    [[...Array(N).keys()].map((i) => i), [...Array(N).keys()].map((i) => (N - 1) * N + i),
-     [...Array(N).keys()].map((j) => j * N), [...Array(N).keys()].map((j) => j * N + N - 1)].forEach((run) => {
+    const runs = [[...Array(N).keys()].map((i) => i), [...Array(N).keys()].map((i) => (N - 1) * N + i),
+                  [...Array(N).keys()].map((j) => j * N), [...Array(N).keys()].map((j) => j * N + N - 1)];
+    runs.forEach((run) => {
       const v = [], idx = [];
       run.forEach((k, n) => { v.push(tp.getX(k), tp.getY(k), tp.getZ(k), tp.getX(k), 0, tp.getZ(k)); if (n) { const a = (n - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } });
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(v, 3)); g.setIndex(idx); g.computeVertexNormals();
       body.add(new THREE.Mesh(g, sideMat));
-      body.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(run.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k) + 0.004, tp.getZ(k)))),
-        new THREE.LineBasicMaterial({ color: C.blue, transparent: true, opacity: 0.55 })));
     });
-    for (let s = 1; s < 7; s++) body.add(ringLine(ICE_FOOT / 2 + 0.002, ICE_FOOT / 2 + 0.002, ICE_H * s / 7, C.blue, 0.12));
     group.add(body);
     group.add(glassBox(CUBE, CUBE, CUBE, 0, 0.32));
     group.add(groundShadow(CUBE * 2.2, CUBE * 2.2, -0.005));
-    const rings = new THREE.Group(); group.add(rings);
 
-    let current = 1, target = 1;
-    function setYear(year) {
-      target = D.vol(year) / D.V0;
-      rings.clear();
-      rings.add(ringLine(CUBE / 2 + 0.003, CUBE / 2 + 0.003, iceLevelY(1), C.ink, 0.5, true));
-      rings.add(ringLine(CUBE / 2 + 0.003, CUBE / 2 + 0.003, iceLevelY(target), C.blue, 0.9));
+    // ---- Jahres-Ebenen: für jedes Jahr die Eis-Oberfläche + ihr Zickzack-Rand ----
+    // (teilen sich die Geometrie, nur in der Höhe skaliert → leicht)
+    const loop = [];
+    for (let i = 0; i < N; i++) loop.push(i);
+    for (let j = 1; j < N; j++) loop.push(j * N + N - 1);
+    for (let i = N - 2; i >= 0; i--) loop.push((N - 1) * N + i);
+    for (let j = N - 2; j >= 0; j--) loop.push(j * N);
+    const rimGeo = new THREE.BufferGeometry().setFromPoints(loop.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k), tp.getZ(k))));
+    const layersG = new THREE.Group(); group.add(layersG);
+    const COL = { line: new THREE.Color("#7fb8ec"), hot: C.hot, glow: new THREE.Color("#2d41d3"), face: new THREE.Color("#a9d1f5"), faceGlow: new THREE.Color("#4d6dff") };
+    const layers = {};
+    D.years.forEach((yr) => {
+      const f = D.vol(yr) / D.V0, hot = !!D.hotSummers[yr], major = yr % 5 === 0;
+      const face = new THREE.Mesh(top, new THREE.MeshBasicMaterial({ color: COL.face, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+      face.scale.y = f; face.position.y = 0.006; face.renderOrder = 2;
+      const rim = new THREE.Line(rimGeo, new THREE.LineBasicMaterial({ color: hot ? COL.hot : COL.line, transparent: true, opacity: 0.4 }));
+      rim.scale.y = f; rim.position.y = 0.003; rim.renderOrder = 3;
+      layersG.add(face, rim);
+      layers[yr] = { yr, f, hot, major, face, rim };
+    });
+
+    let current = 1, target = 1, year = D.LAST, lit = new Set();
+    function paint() {
+      D.years.forEach((yr) => {
+        const L = layers[yr], visible = yr <= year;
+        L.face.visible = L.rim.visible = visible;
+        if (!visible) return;
+        const glow = lit.has(yr) || yr === year;
+        L.face.material.color.copy(glow ? COL.faceGlow : COL.face);
+        L.face.material.opacity = glow ? (yr === year ? 0.32 : 0.5) : 0;
+        L.face.visible = visible && glow;
+        L.rim.material.color.copy(glow ? COL.glow : L.hot ? COL.hot : COL.line);
+        L.rim.material.opacity = glow ? 1 : L.hot ? 0.7 : L.major ? 0.45 : 0.16;
+      });
     }
+    function setYear(y) { year = y; target = D.vol(y) / D.V0; paint(); }
+    function highlight(set) { lit = new Set(set); paint(); }
     function tick(dt) { current += (target - current) * Math.min(1, dt * 6); body.scale.y = current; }
-    return { group, setYear, tick, CUBE };
+
+    // Jahr zu einer Höhe am Glas (für Maus-Hover)
+    function yearAtHeight(y) {
+      let best = null, bd = 1e9;
+      D.years.forEach((yr) => { if (yr > year) return; const d = Math.abs(iceLevelY(D.vol(yr) / D.V0) - y); if (d < bd) { bd = d; best = yr; } });
+      return bd < 0.12 ? best : null;
+    }
+    // Punkt auf dem Rand (rechts vorne) einer Jahres-Ebene – für Beschriftungen
+    const cornerK = (N - 1) * N + N - 1, corners = [0, N - 1, N * N - 1, (N - 1) * N];
+    const rimPoint = (yr) => new THREE.Vector3(tp.getX(cornerK), tp.getY(cornerK) * D.vol(yr) / D.V0, tp.getZ(cornerK));
+    const rimCorners = (yr) => corners.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k) * D.vol(yr) / D.V0, tp.getZ(k)));
+
+    // Gipfel für Gletscher-Markierungen (je Block der höchste Punkt)
+    const peaks = [];
+    for (let bj = 0; bj < 2; bj++) for (let bi = 0; bi < 3; bi++) {
+      let bk = 0, bh = -1;
+      for (let j = 6 + bj * 22; j < 6 + (bj + 1) * 22; j++) for (let i = 6 + bi * 15; i < 6 + (bi + 1) * 15; i++) {
+        const k = j * N + i; if (tp.getY(k) > bh) { bh = tp.getY(k); bk = k; }
+      }
+      peaks.push(new THREE.Vector3(tp.getX(bk), tp.getY(bk), tp.getZ(bk)));
+    }
+    const surfaceAt = (p) => new THREE.Vector3(p.x, p.y * current, p.z);
+
+    return { group, setYear, tick, highlight, yearAtHeight, rimPoint, rimCorners, peaks, surfaceAt, CUBE, levelY: iceLevelY };
   }
 
   // ===================================================================
