@@ -1,32 +1,40 @@
-# Schmelzpunkt – Prototyp 2 (Data Vis)
+# Swiss Glaciers – Prototyp 3 (Data Vis)
 
-Helle Version, Layout angelehnt an simslifecycle.com. Alles in 3D (Three.js, liegt lokal in `js/vendor/`).
-Der erste, dunkle Prototyp liegt unverändert im Unterordner `Prototyp 1 (dunkel)`.
+Helle Version (Layout angelehnt an simslifecycle.com), Ablauf nach euren Papier-Skizzen.
+Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
 
 ## Öffnen
-- `index.html` doppelklicken – läuft ohne Server.
-- Oder in VS Code mit der Extension **Live Server** (Rechtsklick auf `index.html` → *Open with Live Server*).
-- Die Schriften (Fraunces, Manrope) kommen von Google Fonts → brauchen Internet, sonst greift eine Ersatzschrift.
+- `index.html` doppelklicken – läuft ohne Server (oder VS Code → Live Server).
+- Schriften (Fraunces, Manrope) kommen von Google Fonts → brauchen Internet.
 
-## Aufbau
-- **Startseite:** links der Karten-Cube (Relief der Schweiz im Glaskasten, reagiert auf die Maus), rechts der Eis-Cube, der sich dreht, bis man draufklickt. Klick öffnet die jeweilige Ansicht.
-- **Karte:** Relief zum Drehen (ziehen) und Zoomen (scrollen). Eisflächen schrumpfen mit dem Jahr. Feine Beschriftungen mit Leitlinien – sie verteilen sich automatisch, damit nichts überlappt; ausgeblendete erscheinen beim Darüberfahren.
-- **Eisblock:** Glaswürfel = Eis von 1970. Der Eisblock hat eine Berglandschaft aus Eis als Oberfläche und sinkt mit jedem Jahr. Ringe am Glas: gestrichelt = 1970, orange = heisse Sommer, blau = gewähltes Jahr.
-- **Zeitleiste rechts:** überall gleich – ziehen, klicken, Mausrad, Pfeiltasten, ▶ abspielen, „Heute“ = 2026.
+## Ablauf (wie in den Skizzen)
+1. **Übersicht (Skizze 1):** Karte gross links, Cube rechts unten (dreht sich), Text unten links, Suche oben rechts, Zeitleiste rechts mit 2026 oben.
+2. **Klick auf den Cube (Skizze 1B):** Die Drehung stoppt, der Cube wird gross und leicht durchsichtig. Die Karte bleibt blass oben links im Hintergrund.
+   Im Cube: die Berglandschaft der Alpen mit den Gletschern als Eisflächen, Bohrkern-Zylindern und feinen Beschriftungen.
+   Die **Zeitleiste läuft von selbst** (1970 → 2026, Schleife). Klick auf ein Jahr → sie bleibt dort stehen. ▶ startet sie wieder.
+3. **Klick auf einen Gletscher (Skizze 2B):** Gletscher in Jahres-Layers (1985 · 2000 · 2015 · 2026) übereinander, auf jedem Layer ein Zylinder = Eiskernbohrung. Das Layer zum gewählten Jahr ist blau markiert. Oben links: Foto des Gletschers.
+   Auch über die **Suche** oder per Klick auf der Karte erreichbar.
+4. **↵** unten links geht einen Schritt zurück.
+
+## Fotos
+In `img/gletscher/` ablegen, Dateiname = Gletscher-ID (z. B. `aletsch.jpg`) – Liste in `img/gletscher/LIES-MICH.txt`.
+Solange kein Foto da ist, erscheint ein Platzhalter (und die Browser-Konsole meldet die fehlende Datei – das ist normal).
 
 ## Dateien
 | Datei | Inhalt |
 |---|---|
-| `index.html` | Seitenstruktur (Startseite, Karte, Eisblock, Zeitleiste) |
-| `css/style.css` | Styling – Farben & Schriften oben in `:root` |
+| `index.html` | Seitenstruktur |
+| `css/style.css` | Styling – Farben & Schriften oben in `:root`, Panel-Positionen pro Zustand (`.state-overview/-cube/-glacier`) |
 | `js/data.js` | **alle Daten** – hier echte GLAMOS-Werte eintragen |
 | `js/switzerland.js` | Relief, Landesgrenze, Seen |
-| `js/scene.js` | 3D-Kern: Bühne, Relief-Diorama, Eisblock |
-| `js/main.js` | gemeinsamer Zustand, Seitenwechsel, Zahlen-Karte |
-| `js/home.js` · `js/mapview.js` · `js/cubeview.js` | die drei Ansichten |
-| `js/timeline.js` | Zeitleiste |
+| `js/scene.js` | 3D-Kern: Bühne, Relief, Eisblock, Bohrkern, Beschriftungen |
+| `js/main.js` | Zustand & Navigation, Zahlen-Karte, Suche |
+| `js/home.js` | Startseite (Karte, Titel, Zustände) |
+| `js/cubeview.js` | Inhalt des Cubes: Eisblock → Berglandschaft → Gletscher-Layers |
+| `js/mapview.js` | Karte als eigene Seite |
+| `js/timeline.js` | Zeitleiste (2026 oben, Auto-Play) |
 
 ## Wichtig zu den Daten
 - Gesichert (GLAMOS/SCNAT): 2000 = 74.9 km³, 2024 = 46.5 km³, 2025 −3 %, 2026 −5.5 % → 42.6 km³; 1019 verschwundene Gletscher 1973–2016.
-- Zwischenjahre, Gletscherflächen und das **Relief sind für den Prototyp geschätzt bzw. schematisch erzeugt** (kein echtes Höhenmodell).
-- Für die finale Version: Höhenmodell von swisstopo (z. B. DHM25 / swissALTI3D, stark verkleinert) und GLAMOS-Reihen einbauen.
+- Zwischenjahre, Gletscherflächen, Eisflächen-Formen und das Relief sind **geschätzt bzw. schematisch**.
+- Bohrkern-Zylinder sind Platzhalter (Höhe = Flächenanteil), noch keine echten Eiskern-Daten.

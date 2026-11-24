@@ -1,72 +1,78 @@
 /* =========================================================================
-   Startseite: wechselndes Wort in der Headline + die zwei 3D-Cubes
-   links: Relief-Karte im Glaskasten · rechts: Eisblock, dreht sich bis zum Klick
+   Startseite – Rahmen für die drei Zustände
+   overview : Karte gross links, Cube rechts (dreht sich)
+   cube     : Cube gross, Karte bleibt blass oben links im Hintergrund
+   glacier  : ein Gletscher in Jahres-Layers, oben links ein echtes Foto
+   Der Inhalt des Cubes selbst steckt in cubeview.js
    ========================================================================= */
 window.Home = (function () {
-  let mapStage, cubeStage, dio, ice;
-  let spin = 0.45, spinTarget = 0.45, stopping = false;
+  const D = GLACIER_DATA;
+  let mapStage, dio, page, lastMode = null;
 
   function rotator() {
     const words = ["schmilzt.", "verschwindet.", "wird zu Wasser.", "verändert die Alpen."];
     const el = document.querySelector(".rotator");
     let i = 0;
     setInterval(() => {
-      if (App.state.page !== "home") return;
-      const old = el.querySelector(".rot-word");
-      old.classList.add("out");
-      setTimeout(() => {
-        i = (i + 1) % words.length;
-        el.innerHTML = `<span class="rot-word">${words[i]}</span>`;
-      }, 420);
+      if (App.state.page !== "home" || App.state.mode !== "overview") return;
+      el.querySelector(".rot-word").classList.add("out");
+      setTimeout(() => { i = (i + 1) % words.length; el.innerHTML = `<span class="rot-word">${words[i]}</span>`; }, 420);
     }, 2800);
   }
 
+  function photo(g) {
+    const img = App.$("glacier-photo"), ph = App.$("photo-placeholder");
+    const path = `img/gletscher/${g.id}.jpg`;
+    App.$("photo-path").textContent = path;
+    App.$("photo-caption").textContent = `${g.name} · Kanton ${g.canton}`;
+    img.alt = "Foto " + g.name;
+    img.hidden = true; ph.hidden = false;
+    img.onload = () => { img.hidden = false; ph.hidden = true; };
+    img.onerror = () => { img.hidden = true; ph.hidden = false; };
+    img.src = path;
+  }
+
+  function onRoute(s) {
+    const mode = s.page === "home" ? s.mode : null;
+    page.classList.remove("state-overview", "state-cube", "state-glacier");
+    if (mode) page.classList.add("state-" + mode);
+    mapStage.active = s.page === "home" && mode !== "glacier";
+
+    if (mode === "glacier") {
+      const g = App.glacierById(s.glacier);
+      App.$("t-glacier-name").textContent = g.name;
+      photo(g);
+    }
+    // Zeitleiste: im Cube-Modus läuft sie von selbst
+    if (mode === "cube" && lastMode !== "cube") Timeline.play({ loop: true, fromStart: lastMode === "overview" });
+    if (mode !== "cube" && lastMode === "cube") Timeline.stop();
+    lastMode = mode;
+  }
+
   function init() {
+    page = App.$("page-home");
     rotator();
 
-    // ---- links: Karte ----
+    // ---- Karte (links / blass im Hintergrund) ----
     mapStage = Scene3D.createStage(App.$("home-map-stage"), { fov: 28, theta: -0.3, phi: 0.9, radius: 17.5, target: [0, 0.35, 0] });
-    dio = Scene3D.buildDiorama({ glassH: 2.4 });
+    dio = Scene3D.buildRelief({ glassH: 2.4 });
     mapStage.scene.add(dio.group);
-    const card = App.$("home-map-stage").closest(".cube-card");
+    const panel = App.$("panel-map");
     let tilt = 0;
-    card.addEventListener("pointermove", (e) => {
-      const r = card.getBoundingClientRect();
-      tilt = ((e.clientX - r.left) / r.width - 0.5);
+    panel.addEventListener("pointermove", (e) => { const r = panel.getBoundingClientRect(); tilt = (e.clientX - r.left) / r.width - 0.5; });
+    panel.addEventListener("pointerleave", () => (tilt = 0));
+    mapStage.onFrame = (dt) => { const o = mapStage.orbit; o.theta += ((-0.3 + tilt * 0.5) - o.theta) * Math.min(1, dt * 3); };
+    panel.addEventListener("click", () => App.go("map"));
+    panel.addEventListener("keydown", (e) => { if (e.key === "Enter") App.go("map"); });
+
+    App.$("back-btn").addEventListener("click", () => App.go(App.state.mode === "glacier" ? "cube" : "home"));
+
+    App.onChange((s, what) => {
+      if (what === "route") onRoute(s);
+      dio.setYear(s.year);
+      App.$("t-cube-year").textContent = s.year;
     });
-    card.addEventListener("pointerleave", () => (tilt = 0));
-    mapStage.onFrame = (dt) => {
-      const o = mapStage.orbit;
-      o.theta += ((-0.3 + tilt * 0.5) - o.theta) * Math.min(1, dt * 3);
-    };
-
-    // ---- rechts: Eisblock, dreht dauerhaft ----
-    cubeStage = Scene3D.createStage(App.$("home-cube-stage"), { fov: 28, theta: 0.6, phi: 1.1, radius: 13.5, target: [0, 1.85, 0] });
-    ice = Scene3D.buildIceCube({ rings: false });
-    cubeStage.scene.add(ice.group);
-    cubeStage.onFrame = (dt) => {
-      spin += (spinTarget - spin) * Math.min(1, dt * 3);
-      cubeStage.orbit.theta += spin * dt;
-      ice.tick(dt);
-    };
-
-    App.$("home-cube-card").addEventListener("click", () => {
-      if (stopping) return;
-      stopping = true;
-      spinTarget = 0;                      // Drehung stoppt sanft …
-      setTimeout(() => {                   // … dann öffnet sich der Würfel
-        App.go("cube");
-        stopping = false;
-      }, 750);
-    });
-
-    App.onChange((s) => { dio.setYear(s.year); ice.setYear(s.year); });
-    dio.setYear(App.state.year); ice.setYear(App.state.year);
-
-    App.registerPage("home", {
-      show() { mapStage.active = cubeStage.active = true; spinTarget = 0.45; mapStage.resize(); cubeStage.resize(); },
-      hide() { mapStage.active = cubeStage.active = false; }
-    });
+    dio.setYear(App.state.year);
   }
 
   return { init };

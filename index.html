@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schmelzpunkt – Schweizer Gletscher 1970–2026</title>
+  <title>Swiss Glaciers – Schweizer Gletscher 1970–2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,119 +16,90 @@
   <header class="site-header">
     <a class="logo" href="#home" data-go="home">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z M3 7l9 5 9-5 M12 12v10"/></svg>
-      Schmelzpunkt
+      Swiss Glaciers
     </a>
     <nav class="main-nav" aria-label="Hauptnavigation">
       <a href="#home" data-go="home">Übersicht</a>
+      <a href="#cube" data-go="cube">Alle Gletscher</a>
       <a href="#map" data-go="map">Karte</a>
-      <a href="#cube" data-go="cube">Eisblock</a>
-      <a href="#home-stats" data-go="home" data-scroll="stats">Zahlen</a>
     </nav>
-    <a class="pill pill-light" href="#home-sources" data-go="home" data-scroll="sources">Quellen</a>
+    <form class="search" id="search" role="search" autocomplete="off">
+      <input id="search-input" list="glacier-list" placeholder="Gletscher suchen" aria-label="Gletscher suchen">
+      <datalist id="glacier-list"></datalist>
+      <button type="submit" aria-label="Suchen">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
+      </button>
+    </form>
   </header>
 
   <main class="content">
 
-    <!-- ================= Startseite ================= -->
-    <section class="page page-home is-active" id="page-home">
-      <div class="hero">
-        <p class="eyebrow">Data Visualisation · Schweizer Gletscher 1970–2026</p>
-        <h1>
-          Das Eis der Schweiz<br>
-          <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span>
-        </h1>
-        <p class="lead">Zwei Wege durch dieselben Daten: links die Gletscher an ihrem Ort, rechts alles Eis zusammen in einem Würfel. Die Zeitleiste rechts gilt überall.</p>
+    <!-- ================= Startseite: Karte + Cube (3 Zustände) ================= -->
+    <section class="page page-home is-active state-overview" id="page-home">
+
+      <div class="home-title">
+        <p class="eyebrow" id="home-eyebrow">Data Visualisation · Schweizer Gletscher 1970–2026</p>
+        <h1 class="t-overview">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
+        <h1 class="t-cube">Alle Gletscher <em id="t-cube-year">2026</em></h1>
+        <h1 class="t-glacier"><span id="t-glacier-name">Gletscher</span> <em>1985–2026</em></h1>
       </div>
 
-      <div class="cubes">
-        <article class="cube-card" data-go="map" tabindex="0" role="link" aria-label="Karte öffnen">
-          <div class="cube-stage" id="home-map-stage"></div>
-          <div class="cube-caption">
-            <span class="num">01</span>
-            <div>
-              <h2>Karte</h2>
-              <p>Die Schweiz als Relief im Glaskasten. Jeder Gletscher an seinem Ort – und wie er Jahr für Jahr kleiner wird.</p>
-            </div>
-            <span class="pill pill-dark">Karte öffnen <span aria-hidden="true">→</span></span>
-          </div>
-        </article>
-
-        <article class="cube-card" id="home-cube-card" tabindex="0" role="link" aria-label="Eisblock öffnen">
-          <div class="cube-stage" id="home-cube-stage"></div>
-          <div class="cube-caption">
-            <span class="num">02</span>
-            <div>
-              <h2>Eisblock</h2>
-              <p>Alles Schweizer Gletschereis von 1970 als ein Block. Anklicken stoppt die Drehung und öffnet den Würfel.</p>
-            </div>
-            <span class="pill pill-dark">Würfel öffnen <span aria-hidden="true">→</span></span>
-          </div>
-        </article>
+      <!-- Karte (bleibt im Cube-Modus blass oben links) -->
+      <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Karte öffnen">
+        <div class="panel-stage" id="home-map-stage"></div>
+        <span class="panel-tag">Map <span aria-hidden="true">↗</span></span>
       </div>
 
-      <div class="stats" id="home-stats">
-        <div class="stat">
-          <span class="stat-num"><span id="st-pct">−50</span><small>%</small></span>
-          <p>Gletschereis seit 1970 – Stand <b class="yr">2026</b></p>
+      <!-- echtes Foto des Gletschers (Gletscher-Modus) -->
+      <figure class="panel panel-photo" id="panel-photo">
+        <img id="glacier-photo" alt="">
+        <div class="photo-placeholder" id="photo-placeholder">
+          <svg viewBox="0 0 300 160" aria-hidden="true"><path d="M0 150 L60 60 L95 100 L140 30 L190 110 L225 70 L300 150Z"/><path class="ice" d="M128 48 C140 70 150 95 175 128 M134 52 C142 78 155 105 168 132 M140 42 C152 66 168 92 186 120"/></svg>
+          <span>Foto einfügen: <code id="photo-path">img/gletscher/aletsch.jpg</code></span>
         </div>
-        <div class="stat">
-          <span class="stat-num"><span id="st-vol">42.6</span><small>km³</small></span>
-          <p>Eis sind <b class="yr">2026</b> noch übrig – fast so viel wie der ganze Bodensee fasst</p>
-        </div>
-        <div class="stat">
-          <span class="stat-num">1019</span>
-          <p>kleine Gletscher sind zwischen 1973 und 2016 ganz verschwunden</p>
+        <figcaption id="photo-caption">Foto</figcaption>
+      </figure>
+
+      <!-- Der Cube -->
+      <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Cube öffnen">
+        <div class="panel-stage" id="cube-stage"></div>
+        <div class="label-layer" id="cube-labels"></div>
+        <span class="panel-tag">Cube · alle Gletscher <span aria-hidden="true">↗</span></span>
+        <p class="cube-hint" id="cube-hint">Gletscher anklicken · ziehen zum Drehen</p>
+      </div>
+
+      <!-- TEXT -->
+      <div class="home-text">
+        <p class="lead">Zwei Wege durch dieselben Daten: die <b>Karte</b> zeigt jeden Gletscher an seinem Ort, der <b>Cube</b> alles Eis zusammen. Klick auf den Cube öffnet die Berglandschaft – die Zeitleiste rechts läuft dann von selbst.</p>
+        <div class="mini-stats">
+          <div><strong id="st-pct">−50 %</strong><span>Eis seit 1970</span></div>
+          <div><strong id="st-vol">42.6 km³</strong><span>übrig im Jahr <b class="yr">2026</b></span></div>
+          <div><strong>1019</strong><span>Gletscher weg (1973–2016)</span></div>
         </div>
       </div>
 
-      <footer class="site-footer" id="home-sources">
-        <div>
-          <span class="eyebrow">Quellen</span>
-          <p>Gletschervolumen: GLAMOS / SCNAT (Fixpunkte 2000, 2024–2026). Zwischenjahre und Gletscherflächen sind für den Prototyp geschätzt. Grenzen & Seen: swisstopo. Relief: schematisch erzeugt.</p>
-        </div>
-        <p class="muted">Prototyp 2 · ZHdK Data Vis · 2026</p>
-      </footer>
+      <button class="back-btn" id="back-btn" aria-label="Zurück">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v7a3 3 0 0 1-3 3H6 M10 11l-4 4 4 4"/></svg>
+      </button>
     </section>
 
-    <!-- ================= Karte ================= -->
+    <!-- ================= Karte (eigene Seite) ================= -->
     <section class="page page-detail" id="page-map">
       <div class="stage3d" id="map-stage"></div>
       <div class="label-layer" id="map-labels"></div>
       <div class="detail-head">
         <a class="pill pill-light back" href="#home" data-go="home">← Übersicht</a>
         <h2>Gletscher <em>auf der Karte</em></h2>
-        <p>Ziehen zum Drehen · Scrollen zum Zoomen · Gletscher anklicken</p>
-      </div>
-      <div class="glacier-card" id="glacier-card" hidden>
-        <button class="close" id="glacier-close" aria-label="Schliessen">×</button>
-        <span class="eyebrow" id="gc-canton">Kanton</span>
-        <h3 id="gc-name">Gletscher</h3>
-        <div class="gc-row">
-          <div><span class="eyebrow">Fläche <span id="gc-year">2026</span></span><strong id="gc-area">–</strong></div>
-          <div><span class="eyebrow">seit 1970</span><strong id="gc-change">–</strong></div>
-        </div>
-        <svg id="gc-spark" viewBox="0 0 300 80" class="spark" aria-label="Flächenverlauf 1970–2026"></svg>
-        <p class="muted small" id="gc-note"></p>
+        <p>Ziehen zum Drehen · Scrollen zum Zoomen · Gletscher anklicken öffnet ihn im Cube</p>
       </div>
     </section>
 
-    <!-- ================= Eisblock ================= -->
-    <section class="page page-detail" id="page-cube">
-      <div class="stage3d" id="cube-stage"></div>
-      <div class="label-layer" id="cube-labels"></div>
-      <div class="detail-head">
-        <a class="pill pill-light back" href="#home" data-go="home">← Übersicht</a>
-        <h2>Der schmelzende <em>Eisblock</em></h2>
-        <p>Der Glaswürfel ist das Eis von 1970. Ziehen zum Drehen · Ringe = Stand in heissen Sommern</p>
-      </div>
-    </section>
-
-    <!-- Zahlen-Karte (auf Karte & Eisblock) -->
+    <!-- Zahlen-Karte -->
     <aside class="info-card" id="info-card" aria-label="Zahlen zum gewählten Jahr">
-      <span class="eyebrow">Gletschereis Schweiz · <b id="info-year">2026</b></span>
-      <div class="hero-num"><span id="hero-vol">42.6</span><small>km³</small></div>
+      <span class="eyebrow" id="info-kicker">Gletschereis Schweiz · <b id="info-year">2026</b></span>
+      <div class="hero-num"><span id="hero-vol">42.6</span><small id="hero-unit">km³</small></div>
       <div class="bar" aria-hidden="true"><span id="hero-bar"></span></div>
-      <p class="sub"><span id="hero-pct">50 %</span> vom Eis von 1970 ist noch da</p>
+      <p class="sub" id="hero-sub"><span id="hero-pct">50 %</span> vom Eis von 1970 ist noch da</p>
       <div class="info-row">
         <div><span class="eyebrow">seit 1970</span><strong id="loss-total">−42.4 km³</strong><span class="muted" id="loss-biel"></span></div>
         <div><span class="eyebrow">dieses Jahr</span><strong id="loss-year">−2.5 km³</strong><span class="muted" id="loss-year-pct"></span></div>
@@ -140,9 +111,9 @@
     <div id="tooltip" class="tooltip" role="status"></div>
   </main>
 
-  <!-- ================= Zeitleiste rechts – überall gleich ================= -->
+  <!-- ================= Zeitleiste rechts – 2026 oben ================= -->
   <aside class="timeline" aria-label="Zeitleiste 1970 bis 2026">
-    <span class="tl-title">Zeit</span>
+    <div class="tl-big" id="tl-big">2026</div>
     <button class="play" id="play-btn" aria-label="Abspielen">
       <svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4l10 6-10 6z"/><path class="i-pause" d="M5 4h3v12H5zM12 4h3v12h-3z"/></svg>
     </button>
@@ -161,8 +132,8 @@
 <script src="js/main.js"></script>
 <script src="js/timeline.js"></script>
 <script src="js/home.js"></script>
-<script src="js/mapview.js"></script>
 <script src="js/cubeview.js"></script>
+<script src="js/mapview.js"></script>
 <script>App.start();</script>
 </body>
 </html>

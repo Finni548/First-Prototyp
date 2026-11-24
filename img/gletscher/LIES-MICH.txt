@@ -1,0 +1,11 @@
+Hier Fotos der Gletscher ablegen – sie erscheinen automatisch oben links,
+wenn man einen Gletscher im Cube öffnet.
+
+Dateiname = Gletscher-ID + .jpg, z. B.:
+  aletsch.jpg, gorner.jpg, fiescher.jpg, unteraar.jpg, oberaletsch.jpg,
+  findel.jpg, corbassiere.jpg, rhone.jpg, gauli.jpg, trift.jpg, otemma.jpg,
+  morteratsch.jpg, zinal.jpg, allalin.jpg, plainemorte.jpg, trient.jpg,
+  stein.jpg, clariden.jpg, tsanfleuron.jpg, silvretta.jpg, basodino.jpg,
+  birch.jpg, pizol.jpg
+
+Achtet auf die Bildrechte (z. B. eigene Fotos, Wikimedia Commons mit Lizenzangabe).
