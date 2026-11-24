@@ -21,7 +21,7 @@ window.CubeView = (function () {
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
 
   const CAM = {
-    overview: { theta: 0.6, phi: 1.1, radius: 13.5, target: [0, 1.85, 0], shift: 0 },
+    overview: { theta: 0.6, phi: 1.12, radius: 17, target: [0, 1.9, 0], shift: 0 },
     cube:     { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0 },
     glacier:  { theta: 0.55, phi: 1.12, radius: 17.5, target: [0, 1.8, 0], shift: -0.01 }
   };
@@ -35,9 +35,9 @@ window.CubeView = (function () {
   function valueText(y) {
     if (App.state.mode === "glacier" && gcube) {
       const g = curG(), a = D.area(g, y);
-      return a > 0 ? `${App.fmt(a)} km² · ${App.fmt(gcube.frac(y) * 100, 0)} % Eis` : "verschwunden";
+      return a > 0 ? `${App.fmt(a)} km², ${App.fmt(gcube.frac(y) * 100, 0)} % Eis` : "verschwunden";
     }
-    return `${App.fmt(D.vol(y))} km³ · ${App.fmt(D.vol(y) / D.V0 * 100, 0)} %`;
+    return `${App.fmt(D.vol(y))} km³, ${App.fmt(D.vol(y) / D.V0 * 100, 0)} %`;
   }
 
   const lit = () => [...pinned, ...(hoverYear ? [hoverYear] : [])];
@@ -87,13 +87,13 @@ window.CubeView = (function () {
       labels.set(cores.map((c) => ({
         id: c.g.id, name: c.g.name, rank: c.g.a1973,
         pos: () => ice.group.localToWorld(ice.surfaceAt(c.peak).add(v.set(0, 0.42 * coreScale(c.g), 0))).clone(),
-        val: () => App.fmt(D.area(c.g, App.state.year)) + " km² · Bohrkern"
+        val: () => App.fmt(D.area(c.g, App.state.year)) + " km²"
       })));
     } else if (App.state.mode === "glacier" && gcube) {
       labels.set(gcores.map((c) => ({
         id: "core" + c.n, name: "Bohrkern " + c.n, rank: 10 - c.n,
         pos: () => gcube.group.localToWorld(gcube.surfaceAt(c.peak).add(v.set(0, 0.5 * Math.max(0.12, gcube.frac(App.state.year)), 0))).clone(),
-        val: () => `Eis ${App.fmt(gcube.frac(App.state.year) * 100, 0)} % von 1970`
+        val: () => `${App.fmt(gcube.frac(App.state.year) * 100, 0)} % Eis von 1970`
       })));
     } else labels.clear();
     yearLabels();
@@ -195,7 +195,7 @@ window.CubeView = (function () {
     const y = hit ? hit.point.clone().applyMatrix4(new THREE.Matrix4().copy(obj.group.matrixWorld).invert()).y : null;
     const yr = y != null ? obj.yearAtHeight(y) : null;
     if (yr !== hoverYear) { hoverYear = yr; relight(); }
-    if (yr) App.showTip(`<b>${yr}</b> · ${valueText(yr)}${D.hotSummers[yr] ? ' · <span style="color:#e8743b">heisser Sommer</span>' : ""}<br><span style="color:#8a8d96">Klick: Ebene festhalten</span>`, e);
+    if (yr) App.showTip(`<b>${yr}</b>, ${valueText(yr)}${D.hotSummers[yr] ? '<br><span class="t-hot">Heisser Sommer</span>' : ""}<br><span class="t-dim">Klicken, um die Ebene festzuhalten</span>`, e);
     else App.hideTip();
   }
   function onLeave() { if (hoverYear) { hoverYear = null; relight(); } App.hideTip(); }

@@ -31,20 +31,20 @@ window.GLACIER_DATA = (function () {
 
   // Hitzesommer / Rekord-Schmelzjahre – erscheinen orange in der Timeline
   const hotSummers = {
-    2003: "Jahrhundertsommer – bis dahin grösster Eisverlust",
+    2003: "Jahrhundertsommer, bis dahin grösster Eisverlust",
     2015: "Hitzewellen im Juli",
     2018: "Trockener Hitzesommer",
-    2019: "Hitzewellen Juni & Juli – Pizolgletscher offiziell verabschiedet",
-    2022: "Rekordjahr: über 6 % Volumen in einem Sommer",
-    2023: "Zweitgrösster Verlust – 2022 + 2023 zusammen −10 %",
+    2019: "Hitzewellen im Juni und Juli, der Pizolgletscher wird verabschiedet",
+    2022: "Rekordjahr mit über 6 % Eisverlust in einem Sommer",
+    2023: "Zweitgrösster Verlust, 2022 und 2023 zusammen −10 %",
     2026: "−5.5 % in einem Sommer: nur 2022 war schlimmer"
   };
 
   // Ereignisse, die zusätzlich auf der Timeline / Karte erscheinen
   const events = [
-    { year: 1985, label: "Ende der Vorstossphase – ab hier schrumpfen fast alle Gletscher" },
-    { year: 2019, label: "Pizolgletscher (SG) verschwindet", glacier: "pizol" },
-    { year: 2025, label: "Birchgletscher (VS) kollabiert – Blatten verschüttet", glacier: "birch" }
+    { year: 1985, label: "Ende der Vorstossphase. Ab hier schrumpfen fast alle Gletscher." },
+    { year: 2019, label: "Der Pizolgletscher (SG) verschwindet.", glacier: "pizol" },
+    { year: 2025, label: "Der Birchgletscher (VS) kollabiert und verschüttet Blatten.", glacier: "birch" }
   ];
 
   // Ausgewählte Gletscher: Fläche in km² (Näherung SGI 1973 → 2016)

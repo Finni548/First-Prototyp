@@ -6,7 +6,7 @@
   <title>Swiss Glaciers – Schweizer Gletscher 1970–2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -33,104 +33,97 @@
   </header>
 
   <main class="content">
-
-    <!-- ================= Startseite: Karte + Cube (3 Zustände) ================= -->
     <section class="page page-home is-active state-overview" id="page-home">
 
-      <div class="home-title">
-        <p class="eyebrow" id="home-eyebrow">Data Visualisation · Schweizer Gletscher 1970–2026</p>
-        <h1 class="t-overview">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
-        <h1 class="t-cube">Alle Gletscher <em class="t-year">2026</em></h1>
-        <h1 class="t-glacier"><span class="t-gname">Gletscher</span> <em>1970–2026</em></h1>
-        <h1 class="t-map">Karte <em>· alle Gletscher</em></h1>
-        <h1 class="t-area"><span class="t-gname">Gletscher</span> <em>· Gebiet</em></h1>
-        <h1 class="t-probe">Kernbohrung <em id="pr-title">–</em></h1>
+      <!-- Kopf jeder Ansicht: Zurück + Pfad, Titel, ein Satz -->
+      <div class="view-head">
+        <nav class="crumbs" aria-label="Pfad">
+          <button class="back-btn" id="back-btn" aria-label="Zurück">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v7a3 3 0 0 1-3 3H6 M10 11l-4 4 4 4"/></svg>
+          </button>
+          <ol id="crumbs"></ol>
+        </nav>
+        <h1 id="view-title">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
+        <p class="view-lede" id="view-lede"></p>
       </div>
 
-      <!-- Karte (bleibt im Cube-Modus blass oben links) -->
+      <!-- Karte -->
       <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Karte öffnen">
         <div class="panel-stage" id="home-map-stage"></div>
         <div class="label-layer" id="map-labels"></div>
-        <span class="panel-tag">Map <span aria-hidden="true">↗</span></span>
-        <p class="map-hint">Gletscher anklicken · ziehen = drehen · scrollen = zoomen</p>
-        <p class="area-hint">Bohrkern anklicken · Höhenlinien alle 100 m · ziehen = drehen</p>
+        <span class="panel-tag">Karte</span>
       </div>
 
-      <!-- Der Cube -->
+      <!-- Cube -->
       <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Cube öffnen">
         <div class="panel-stage" id="cube-stage"></div>
         <div class="label-layer" id="cube-labels"></div>
         <div class="year-layer" id="cube-years"><svg></svg></div>
 
-        <!-- Gletscher-Ansicht: Berg-Foto + Cutout-Fenster (hinter dem Würfel) -->
+        <!-- Gletscher-Ansicht: Berg-Foto + Cutout (hinter dem Würfel) -->
         <div class="gview" id="gview" hidden>
           <img class="gv-mountain" id="gv-mountain" alt="Verschneiter Berggipfel">
           <canvas class="gv-hole" id="gv-hole" aria-hidden="true"></canvas>
           <canvas class="gv-slab" id="gv-slab" aria-hidden="true"></canvas>
-          <div class="gv-window" id="gv-window"><span class="gv-window-title">Cutout · Jahres-Ebenen</span></div>
+          <div class="gv-window" id="gv-window"></div>
           <div class="gv-table" id="gv-table"></div>
         </div>
-        <span class="panel-tag">Cube · alle Gletscher <span aria-hidden="true">↗</span></span>
-        <p class="cube-hint" id="cube-hint">Maus auf eine Ebene = sie leuchtet · Klick = festhalten · Zylinder = Gletscher öffnen · ziehen = drehen</p>
+        <span class="panel-tag" id="cube-tag">Cube</span>
         <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 Ebene festgehalten</span><button id="pin-clear" type="button">Auswahl löschen</button></div>
       </div>
 
-      <!-- TEXT -->
-      <div class="home-text">
-        <p class="lead">Zwei Wege durch dieselben Daten: die <b>Karte</b> zeigt jeden Gletscher an seinem Ort, der <b>Cube</b> alles Eis zusammen. Klick auf den Cube macht ihn gross: jedes Jahr liegt als eigene Eis-Ebene darin übereinander – die Zeitleiste rechts läuft dann von selbst.</p>
-        <div class="mini-stats">
-          <div><strong id="st-pct">−50 %</strong><span>Eis seit 1970</span></div>
-          <div><strong id="st-vol">42.6 km³</strong><span>übrig im Jahr <b class="yr">2026</b></span></div>
-          <div><strong>1019</strong><span>Gletscher weg (1973–2016)</span></div>
-        </div>
+      <!-- Text der Übersicht -->
+      <div class="home-text card">
+        <p class="lead">Die Karte zeigt jeden Gletscher an seinem Ort. Der Cube fasst alles Eis zusammen: jedes Jahr ist eine eigene Ebene. Wähle einen der beiden Wege.</p>
+        <dl class="stats">
+          <div><dt>Eis seit 1970</dt><dd id="st-pct">−50 %</dd></div>
+          <div><dt>Übrig im Jahr <span class="yr">2026</span></dt><dd id="st-vol">42.6 km³</dd></div>
+          <div><dt>Verschwunden 1973–2016</dt><dd>1019 Gletscher</dd></div>
+        </dl>
       </div>
 
-      <!-- Kernbohrung (Skizze 2A) -->
+      <!-- Kernbohrung -->
       <section class="probe" id="probe" hidden aria-label="Kernbohrung">
-        <figure class="pr-photo-card">
-          <img id="pr-photo" alt="Gletscher-Gebiet">
-          <span class="pr-marker" aria-hidden="true"><i></i></span>
-          <figcaption><span class="eyebrow">Bohrstelle</span> <b id="pr-site">–</b></figcaption>
+        <figure class="figure pr-photo">
+          <div class="figure-img"><img id="pr-photo" alt="Gletscher-Gebiet mit Bohrstelle"><span class="pr-marker" aria-hidden="true"><i></i></span></div>
+          <figcaption>Bohrstelle <b id="pr-site">–</b></figcaption>
         </figure>
         <div class="pr-core" id="pr-core">
-          <div class="pr-head"><span class="pr-badge" id="pr-badge">Platzhalter</span><p id="pr-sub"></p><p class="pr-after" id="pr-after"></p></div>
+          <div class="pr-head"><span class="badge" id="pr-badge">Platzhalter</span><p class="pr-after" id="pr-after"></p></div>
           <svg id="pr-svg"></svg>
-          <p class="pr-note" id="pr-note"></p>
+          <p class="footnote" id="pr-note"></p>
         </div>
         <aside class="pr-side">
-          <figure class="pr-ice">
-            <img id="pr-icecore" alt="Echter Eiskern mit sichtbaren Jahresschichten" hidden>
-            <div class="pr-ice-ph" id="pr-icecore-ph" hidden><span>Foto Eiskern lädt aus dem Internet –<br>oder lokal ablegen: <code>img/eiskern.jpg</code></span></div>
-            <figcaption>Echter Eiskern mit Jahresschichten (GISP2, 1837 m Tiefe) · Foto: National Ice Core Laboratory / USGS, gemeinfrei, via Wikimedia Commons</figcaption>
+          <figure class="figure pr-ice">
+            <div class="figure-img">
+              <img id="pr-icecore" alt="Echter Eiskern mit sichtbaren Jahresschichten" hidden>
+              <div class="pr-ice-ph" id="pr-icecore-ph" hidden><span>Das Foto lädt aus dem Internet.<br>Offline: <code>img/eiskern.jpg</code> ablegen.</span></div>
+            </div>
+            <figcaption>Eiskern mit Jahresschichten (GISP2, 1837 m Tiefe). Foto: National Ice Core Laboratory, USGS, gemeinfrei.</figcaption>
           </figure>
-          <button class="pr-toggle" id="pr-toggle" aria-pressed="false"><span class="sw"><i></i></span> Real Data</button>
-          <div class="pr-table-wrap" id="pr-table-wrap"><div class="pr-table" id="pr-table"></div></div>
+          <button class="switch" id="pr-toggle" aria-pressed="false"><span class="sw"><i></i></span>Messdaten anzeigen</button>
+          <div class="pr-table-wrap" id="pr-table-wrap"><div id="pr-table"></div></div>
         </aside>
       </section>
-
-      <button class="back-btn" id="back-btn" aria-label="Zurück">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v7a3 3 0 0 1-3 3H6 M10 11l-4 4 4 4"/></svg>
-      </button>
     </section>
 
-    <!-- Zahlen-Karte -->
-    <aside class="info-card" id="info-card" aria-label="Zahlen zum gewählten Jahr">
-      <span class="eyebrow" id="info-kicker">Gletschereis Schweiz · <b id="info-year">2026</b></span>
-      <div class="hero-num"><span id="hero-vol">42.6</span><small id="hero-unit">km³</small></div>
+    <!-- Zahlen -->
+    <aside class="info-card card" id="info-card" aria-label="Zahlen zum gewählten Jahr">
+      <p class="ic-title" id="info-kicker">Gletschereis der Schweiz, 2026</p>
+      <div class="hero-num"><span id="hero-vol">42.6</span> <small id="hero-unit">km³</small></div>
       <div class="bar" aria-hidden="true"><span id="hero-bar"></span></div>
-      <p class="sub" id="hero-sub"><span id="hero-pct">50 %</span> vom Eis von 1970 ist noch da</p>
-      <div class="info-row">
-        <div><span class="eyebrow">seit 1970</span><strong id="loss-total">−42.4 km³</strong><span class="muted" id="loss-biel"></span></div>
-        <div><span class="eyebrow">dieses Jahr</span><strong id="loss-year">−2.5 km³</strong><span class="muted" id="loss-year-pct"></span></div>
-      </div>
+      <p class="sub" id="hero-sub">50 % des Eises von 1970</p>
+      <dl class="rows">
+        <div><dt>Seit 1970</dt><dd id="loss-total">−42.4 km³</dd></div>
+        <div><dt>In diesem Jahr</dt><dd id="loss-year">−2.5 km³</dd></div>
+      </dl>
       <p class="note" id="year-note"></p>
-      <div class="chips" id="hot-chips" aria-label="Heisse Sommer"></div>
     </aside>
 
     <div id="tooltip" class="tooltip" role="status"></div>
   </main>
 
-  <!-- ================= Zeitleiste rechts – 2026 oben ================= -->
+  <!-- ================= Zeitleiste rechts ================= -->
   <aside class="timeline" aria-label="Zeitleiste 1970 bis 2026">
     <div class="tl-big" id="tl-big">2026</div>
     <button class="play" id="play-btn" aria-label="Abspielen">

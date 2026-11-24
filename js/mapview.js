@@ -47,7 +47,7 @@ window.MapView = (function () {
       const mesh = Scene3D.makeCore(c.real ? 0.7 : 0.5, c.real ? 0.085 : 0.065);
       mesh.position.set(r.lonToX(c.lon), r.heightAt(c.lon, c.lat), r.latToZ(c.lat));
       mesh.userData.core = c.id;
-      if (c.real) mesh.children.forEach((m) => m.material && m.material.color && m.material.color.set && m.geometry.type !== "CylinderGeometry" && m.material.color.set("#e8743b"));
+      if (c.real) mesh.children.forEach((m) => m.material && m.material.color && m.material.color.set && m.geometry.type !== "CylinderGeometry" && m.material.color.set("#d9643a"));
       r.group.add(mesh);
       return { c, mesh };
     });
@@ -68,9 +68,9 @@ window.MapView = (function () {
       })));
     } else if (mode === "area" && area) {
       labels.set(area.cores.map(({ c, mesh }) => ({
-        id: c.id, name: c.real ? c.name + " · echte Bohrung" : c.name, rank: c.real ? 100 : 10,
+        id: c.id, name: c.name, rank: c.real ? 100 : 10,
         pos: () => area.r.group.localToWorld(v.copy(mesh.position).add(new THREE.Vector3(0, c.real ? 0.72 : 0.52, 0))).clone(),
-        val: () => c.real ? `${c.drilled} · ${c.length} m` : "schematisch · Klick für Details"
+        val: () => c.real ? `Echte Bohrung, ${c.length} m` : "Platzhalter"
       })));
     } else labels.clear();
   }

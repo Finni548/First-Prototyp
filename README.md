@@ -21,7 +21,7 @@ Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
    - **Echte Bohrungen:** *Colle Gnifetti* (im Gebiet Gornergletscher) und *Fiescherhorn* (im Gebiet Aletsch / Fiescher) – orange Zylinder.
    - Die übrigen Bohrkerne sind Platzhalter; ihre Tabelle verweist auf die echten.
 
-**↵** unten links geht immer einen Schritt zurück.
+Oben in jeder Ansicht: **↵** (einen Schritt zurück) und der Pfad, z. B. *Übersicht / Karte / Gornergletscher* – jeder Teil ist anklickbar.
 
 ## Bilder
 - Eiskern-Foto: wird online von Wikimedia Commons geladen (GISP2-Eiskern, National Ice Core Laboratory/USGS, gemeinfrei). Für offline: eigenes Foto als `img/eiskern.jpg` ablegen – es hat Vorrang.
@@ -32,7 +32,7 @@ Falls es von einer Stock-Seite stammt (z. B. Freepik): Lizenz/Quellenangabe prü
 | Datei | Inhalt |
 |---|---|
 | `index.html` | Seitenstruktur |
-| `css/style.css` | Styling – Farben & Schriften oben in `:root`, Panel-Positionen pro Zustand (`.state-overview/-cube/-glacier`) |
+| `css/style.css` | Styling – alle Farben, Schriftgrössen und Abstände als Variablen oben in `:root` (Firn-Hintergrund, Haarlinie, Gletscherblau = gewählt, Orange = heisse Sommer) |
 | `js/data.js` | **alle Daten** – hier echte GLAMOS-Werte eintragen |
 | `js/switzerland.js` | Relief, Landesgrenze, Seen |
 | `js/scene.js` | 3D-Kern: Bühne, Relief, Eisblock, Bohrkern, Beschriftungen |

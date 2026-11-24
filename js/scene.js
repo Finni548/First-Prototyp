@@ -20,9 +20,9 @@ window.Scene3D = (function () {
     iceHi:  new THREE.Color("#cfe6fb"),
     side:   new THREE.Color("#e9e3d6"),
     sideLo: new THREE.Color("#d8d0bf"),
-    ink:    new THREE.Color("#1f232e"),
-    blue:   new THREE.Color("#2d41d3"),
-    hot:    new THREE.Color("#e8743b")
+    ink:    new THREE.Color("#1d2330"),
+    blue:   new THREE.Color("#2e48cf"),
+    hot:    new THREE.Color("#d9643a")
   };
 
   // ---------- Höhenmodell ----------
@@ -406,7 +406,7 @@ window.Scene3D = (function () {
     for (let j = N - 2; j >= 0; j--) loop.push(j * N);
     const rimGeo = new THREE.BufferGeometry().setFromPoints(loop.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k), tp.getZ(k))));
     const layersG = new THREE.Group(); group.add(layersG);
-    const COL = { line: new THREE.Color("#7fb8ec"), hot: C.hot, glow: new THREE.Color("#2d41d3"), face: new THREE.Color("#a9d1f5"), faceGlow: new THREE.Color("#4d6dff") };
+    const COL = { line: new THREE.Color("#7fb8ec"), hot: C.hot, glow: new THREE.Color("#2e48cf"), face: new THREE.Color("#a9d1f5"), faceGlow: new THREE.Color("#4a63e0") };
     const layers = {};
     D.years.forEach((yr) => {
       const f = frac(yr), hot = !!D.hotSummers[yr], major = yr % 5 === 0;

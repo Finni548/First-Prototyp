@@ -19,7 +19,7 @@ window.Probe = (function () {
         length: core.length,
         depthOf: core.depthYear,                 // null → schematisch
         topYear: core.id === "fh" ? 2002 : 2021,
-        note: core.schematicLayers ? "Kernlänge & Bohrjahr echt – Lage der Jahres-Schichten schematisch (keine Tiefen-Daten im Prototyp)" : "Tiefe der Jahre: lineare Näherung aus „oberste 108 m ≈ 1943–2002“"
+        note: core.schematicLayers ? "Kernlänge und Bohrjahr sind echt. Die Lage der Jahresschichten ist schematisch, Tiefendaten fehlen noch." : "Tiefe der Jahre als lineare Näherung: die obersten 108 m entsprechen etwa 1943–2002."
       };
     }
     // schematischer Kern: Länge = modellierte Eisdicke an dieser Stelle im gewählten Jahr
@@ -28,7 +28,7 @@ window.Probe = (function () {
     const L = Math.max(8, Math.round(72 * Math.sqrt(g.a1973) * off * frac));
     const top = App.state.year;
     return { length: L, depthOf: (y) => (y > top ? null : (top - y) / Math.max(1, top - D.FIRST) * L * 0.9), topYear: top,
-             note: "Schematischer Kern: Länge = modellierte Eisdicke, Schichten gleichmässig verteilt (Platzhalter)" };
+             note: "Schematischer Kern: Länge aus der modellierten Eisdicke, Schichten gleichmässig verteilt." };
   }
 
   function drawCore() {
@@ -38,14 +38,14 @@ window.Probe = (function () {
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = "";
     const defs = el("defs", {}, svg);
     const hatch = el("pattern", { id: "pr-hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
-    el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#4d6dff", "stroke-width": 2 }, hatch);
+    el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#2e48cf", "stroke-width": 1.6 }, hatch);
     const rock = el("pattern", { id: "pr-rock", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(-45)" }, defs);
-    el("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "rgba(31,35,46,.35)", "stroke-width": 1 }, rock);
+    el("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "rgba(29,35,48,.3)", "stroke-width": 1 }, rock);
     const glow = el("filter", { id: "pr-glow", x: "-50%", y: "-50%", width: "200%", height: "200%" }, defs);
     el("feGaussianBlur", { stdDeviation: 4, result: "b" }, glow);
     const fm = el("feMerge", {}, glow); el("feMergeNode", { in: "b" }, fm); el("feMergeNode", { in: "SourceGraphic" }, fm);
     const body = el("linearGradient", { id: "pr-body", x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
-    [["0", "#d7ebfb"], [".35", "#f4f9fe"], [".7", "#cfe4f7"], ["1", "#a9cdee"]].forEach(([o, c]) => el("stop", { offset: o, "stop-color": c }, body));
+    [["0", "#cfe5f8"], [".35", "#f6fafe"], [".7", "#d6e8f8"], ["1", "#b5d4ef"]].forEach(([o, c]) => el("stop", { offset: o, "stop-color": c }, body));
 
     const m = model();
     const cx = W * 0.5, rw = Math.min(70, W * 0.22), ry = rw * 0.28;
@@ -80,36 +80,33 @@ window.Probe = (function () {
       el("ellipse", { class: "pr-ring" + (on ? " on" : "") + (schematic ? " schem" : ""), cx, cy, rx: rw, ry, fill: on ? "url(#pr-hatch)" : "none", filter: on ? "url(#pr-glow)" : null }, svg);
       const ly = Math.max(cy, lastLy + 18); lastLy = ly;
       el("line", { class: "pr-lead" + (on ? " on" : ""), x1: cx + rw, y1: cy, x2: cx + rw + 30, y2: ly }, svg);
-      el("text", { class: "pr-yl" + (on ? " on" : ""), x: cx + rw + 34, y: ly + 4 }, svg).textContent = `${y} · ${Math.round(d)} m`;
+      el("text", { class: "pr-yl" + (on ? " on" : ""), x: cx + rw + 34, y: ly + 4 }, svg).textContent = `${y}, ${Math.round(d)} m`;
     });
     // Oberfläche
     el("ellipse", { class: "pr-top", cx, cy: y0, rx: rw, ry }, svg);
-    el("text", { class: "pr-yl top", x: cx + rw + 34, y: y0 - 12 }, svg).textContent = core.real ? `Oberfläche · gebohrt ${m.topYear}` : `Oberfläche ${m.topYear}`;
-    el("text", { class: "pr-yl", x: cx + rw + 34, y: y1 + 4 }, svg).textContent = core.real ? (core.toBedrock ? `Fels · ${core.length} m` : `Kernende · ${core.length} m`) : `Fels · ca. ${m.length} m`;
-    App.$("pr-after").textContent = yr > m.topYear ? `${yr} liegt nach der Bohrung (${m.topYear}) – dieses Jahr ist nicht im Kern.` : "";
+    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y0 - 12 }, svg).textContent = core.real ? `Oberfläche, gebohrt ${m.topYear}` : `Oberfläche ${m.topYear}`;
+    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y1 + 4 }, svg).textContent = core.real ? (core.toBedrock ? `Fels, ${core.length} m` : `Kernende, ${core.length} m`) : `Fels, ca. ${m.length} m`;
+    App.$("pr-after").textContent = yr > m.topYear ? `${yr} liegt nach der Bohrung von ${m.topYear} und ist nicht im Kern.` : "";
     App.$("pr-note").textContent = m.note;
   }
 
   function table() {
     const t = App.$("pr-table");
+    const rows = (list) => `<dl class="rows">${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
     if (core.real) {
-      t.innerHTML = `
-        <div class="pr-row"><span>Ort</span><b>${core.where}</b></div>
-        <div class="pr-row"><span>Höhe</span><b>${core.elev}</b></div>
-        <div class="pr-row"><span>Bohrung</span><b>${core.drilled}</b></div>
-        <div class="pr-row"><span>Kernlänge</span><b>${core.length} m${core.toBedrock ? " (bis Fels)" : ""}</b></div>
-        <div class="pr-row"><span>Zeitraum im Eis</span><b>${core.span}</b></div>
-        <div class="pr-row"><span>Institute</span><b>${core.institutes}</b></div>
-        ${core.facts.map(([k, v]) => `<div class="pr-row"><span>${k}</span><b>${v}</b></div>`).join("")}
-        <div class="pr-src">Quellen: ${core.sources.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ")}</div>`;
+      t.innerHTML = rows([
+        ["Ort", core.where], ["Höhe", core.elev], ["Bohrung", core.drilled],
+        ["Kernlänge", core.length + " m" + (core.toBedrock ? ", bis zum Fels" : "")],
+        ["Zeitraum im Eis", core.span], ["Institute", core.institutes.replace(/ · /g, ", ")],
+        ...core.facts
+      ]) + `<p class="pr-src">Quellen: ${core.sources.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(", ")}</p>`;
     } else {
-      const reals = D.realCores.map((c) => `<button class="pr-jump" data-core="${c.id}">${c.name} (${c.drilled}) →</button>`).join("");
-      t.innerHTML = `
-        <div class="pr-row"><span>Punkt</span><b>${core.name} · ${g.name}</b></div>
-        <div class="pr-row"><span>Status</span><b>keine echte Bohrung – Platzhalter</b></div>
-        <div class="pr-row"><span>Gletscherfläche ${App.state.year}</span><b>${App.fmt(D.area(g, App.state.year))} km² (Näherung)</b></div>
-        <p class="pr-empty">Für diesen Punkt gibt es im Prototyp noch keine Messdaten. Echte Schweizer Eiskerne:</p>
-        <div class="pr-jumps">${reals}</div>`;
+      t.innerHTML = rows([
+        ["Bohrstelle", core.name], ["Gletscher", g.name],
+        ["Fläche " + App.state.year, App.fmt(D.area(g, App.state.year)) + " km² (Näherung)"],
+        ["Status", "Platzhalter, keine Messung"]
+      ]) + `<p class="footnote">Für diesen Punkt gibt es noch keine echten Bohrdaten. Echte Schweizer Eiskerne:</p>
+        <div class="pr-jumps">${D.realCores.map((c) => `<button class="pr-jump" data-core="${c.id}">${c.name}, ${c.drilled}</button>`).join("")}</div>`;
       t.querySelectorAll(".pr-jump").forEach((b) => b.addEventListener("click", () => {
         const c = D.realCores.find((x) => x.id === b.dataset.core);
         const host = D.glaciers.find((x) => MapView.coresFor(x).some((k) => k.id === c.id));
@@ -121,7 +118,7 @@ window.Probe = (function () {
   function photo() {
     // Foto des Gebiets (Berg-Cutout) mit Markierung der Bohrstelle
     App.$("pr-photo").src = window.BERG_CUTOUT || "img/berg-cutout.png";
-    App.$("pr-site").textContent = core.real ? core.name : `${core.name} · ${g.name}`;
+    App.$("pr-site").textContent = core.real ? core.name : `${core.name}, ${g.name}`;
     // Eiskern-Foto: zuerst lokal (img/eiskern.jpg), sonst Wikimedia Commons (gemeinfrei)
     const ic = App.$("pr-icecore");
     const remote = "https://commons.wikimedia.org/wiki/Special:FilePath/GISP2D1837_crop.jpg?width=700";
@@ -134,9 +131,7 @@ window.Probe = (function () {
     g = glacier;
     core = MapView.coresFor(g).find((c) => c.id === coreId) || MapView.coresFor(g)[0];
     root.hidden = false;
-    App.$("pr-title").textContent = core.real ? core.name : core.name;
-    App.$("pr-sub").textContent = core.real ? `${core.where} · ${core.elev}` : `${g.name} · Kanton ${g.canton} · schematische Bohrstelle`;
-    App.$("pr-badge").textContent = core.real ? "echte Bohrung" : "Platzhalter";
+    App.$("pr-badge").textContent = core.real ? "Echte Bohrung" : "Platzhalter";
     App.$("pr-badge").classList.toggle("real", !!core.real);
     photo(); table();
     requestAnimationFrame(drawCore);
@@ -148,6 +143,7 @@ window.Probe = (function () {
     App.$("pr-toggle").addEventListener("click", () => {
       const open = App.$("pr-table-wrap").classList.toggle("open");
       App.$("pr-toggle").setAttribute("aria-pressed", open);
+      App.$("pr-toggle").lastChild.textContent = open ? "Messdaten ausblenden" : "Messdaten anzeigen";
     });
     new ResizeObserver(() => drawCore()).observe(App.$("pr-core"));
     App.onChange((s, what) => {

@@ -61,46 +61,34 @@ window.App = (function () {
     const g = ["glacier", "area", "probe"].includes(state.mode) ? glacierById(state.glacier) : null;
     if (g) {
       const a = D.area(g, y), a0 = D.area(g, D.FIRST), prev = y > D.FIRST ? D.area(g, y - 1) : a;
-      $("info-kicker").innerHTML = `${g.name} · <b id="info-year">${y}</b>`;
+      $("info-kicker").textContent = `${g.name}, Fläche ${y}`;
       $("hero-vol").textContent = a > 0 ? fmt(a) : "0";
       $("hero-unit").textContent = "km²";
       $("hero-bar").style.width = (a / a0 * 100) + "%";
-      $("hero-sub").innerHTML = a > 0 ? `<span>${fmt(a / a0 * 100, 0)} %</span> der Fläche von 1970` : g.goneText;
+      $("hero-sub").textContent = a > 0 ? `Noch ${fmt(a / a0 * 100, 0)} % der Fläche von 1970 (Näherung).` : g.goneText + ".";
       $("loss-total").textContent = signed(a - a0) + " km²";
-      $("loss-biel").textContent = "Fläche (Näherung)";
-      $("loss-year").textContent = y === D.FIRST ? "Start" : signed(a - prev, 2) + " km²";
-      $("loss-year-pct").textContent = "Kanton " + g.canton;
+      $("loss-year").textContent = y === D.FIRST ? "Startjahr" : signed(a - prev, 2) + " km²";
     } else {
       const v = D.vol(y), pct = v / D.V0 * 100, lost = v - D.V0;
-      $("info-kicker").innerHTML = `Gletschereis Schweiz · <b id="info-year">${y}</b>`;
+      $("info-kicker").textContent = `Gletschereis der Schweiz, ${y}`;
       $("hero-vol").textContent = fmt(v);
       $("hero-unit").textContent = "km³";
       $("hero-bar").style.width = pct + "%";
-      $("hero-sub").innerHTML = `<span>${fmt(pct, 0)} %</span> vom Eis von 1970 ist noch da`;
+      $("hero-sub").textContent = lost < -0.5
+        ? `Noch ${fmt(pct, 0)} % des Eises von 1970. Verloren ist so viel wie ${fmt(Math.abs(lost) / D.BIELERSEE, 0)} Bielerseen.`
+        : `Noch ${fmt(pct, 0)} % des Eises von 1970.`;
       $("loss-total").textContent = signed(lost) + " km³";
-      $("loss-biel").textContent = lost < -0.5 ? "≈ " + fmt(Math.abs(lost) / D.BIELERSEE, 0) + " × Bielersee" : "kaum Veränderung";
-      $("loss-year").textContent = y === D.FIRST ? "Start" : signed(D.change(y)) + " km³";
-      $("loss-year-pct").textContent = y === D.FIRST ? "1970 = 100 %" : signed(D.changePct(y)) + " %";
+      $("loss-year").textContent = y === D.FIRST ? "Startjahr" : `${signed(D.change(y))} km³ (${signed(D.changePct(y))} %)`;
     }
     const hot = D.hotSummers[y], ev = D.events.find((e) => e.year === y);
     const note = $("year-note");
-    note.textContent = hot ? "Heisser Sommer · " + hot : ev ? ev.label : "";
+    note.textContent = hot ? "Heisser Sommer: " + hot : ev ? ev.label : "";
     note.classList.toggle("hot", !!hot);
-    document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-active", +c.dataset.year === y));
 
     const v = D.vol(y);
     $("st-pct").textContent = signed(v / D.V0 * 100 - 100, 0) + " %";
     $("st-vol").textContent = fmt(v) + " km³";
     document.querySelectorAll(".yr").forEach((e) => (e.textContent = y));
-  }
-
-  function buildChips() {
-    Object.keys(D.hotSummers).forEach((y) => {
-      const b = document.createElement("button");
-      b.className = "chip"; b.textContent = y; b.dataset.year = y; b.title = D.hotSummers[y];
-      b.addEventListener("click", () => { Timeline.stop(); setYear(+y); });
-      $("hot-chips").appendChild(b);
-    });
   }
 
   function buildSearch() {
@@ -120,7 +108,7 @@ window.App = (function () {
   }
 
   function start() {
-    buildChips(); buildSearch();
+    buildSearch();
     document.querySelectorAll("[data-go]").forEach((el) =>
       el.addEventListener("click", (e) => { e.preventDefault(); go(el.dataset.go); }));
     onChange(renderInfo);

@@ -26,19 +26,19 @@ window.GlacierView = (function () {
       ["Fläche " + yr, a > 0 ? App.fmt(a) + " km²" : "verschwunden"],
       ["Verlust seit 1970", App.signed(a - a0) + " km²"],
       ["Eis-Volumen*", App.fmt(frac * 100, 0) + " % von 1970"],
-      ["Ebenen", "1 pro Jahr · " + (yr - D.FIRST + 1)],
-      ["Bohrkerne", "3 (Platzhalter)"]
+      ["Ebenen", (yr - D.FIRST + 1) + " Jahre"],
+      ["Bohrkerne", "3 Platzhalter"]
     ];
-    App.$("gv-table").innerHTML = rows.map(([k, v], i) =>
-      `<div class="gv-row${i === 2 ? " now" : ""}${i === 6 ? " key" : ""}"><span>${k}</span><b>${v}</b></div>`).join("") +
-      (g.goneText ? `<p class="gv-gone">${g.goneText}</p>` : "") +
-      `<div class="gv-legend">
-         <div><i class="l-rim"></i>Jahres-Ebene</div>
-         <div><i class="l-hot"></i>heisser Sommer</div>
-         <div><i class="l-lit"></i>gemeint · leuchtet</div>
-         <div><i class="l-core"></i>Eiskernbohrung</div>
+    App.$("gv-table").innerHTML =
+      `<dl class="rows">${rows.map(([k, v], i) => `<div class="${i === 2 ? "now" : i === 6 ? "key" : ""}"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>` +
+      (g.goneText ? `<p class="footnote">${g.goneText}.</p>` : "") +
+      `<div class="legend">
+         <div><i></i>Eis-Ebene eines Jahres</div>
+         <div><i class="l-hot"></i>Heisser Sommer</div>
+         <div><i class="l-lit"></i>Gewählt oder festgehalten</div>
+         <div><i class="l-core"></i>Bohrkern</div>
        </div>
-       <p class="gv-foot">* modelliert aus der Flächenänderung (Volumen ≈ Fläche<sup>1.36</sup>) – Prototyp, keine Messwerte.<br>Maus auf eine Ebene = leuchtet · Klick = festhalten</p>`;
+       <p class="footnote">* Modelliert aus der Flächenänderung (Volumen ≈ Fläche<sup>1.36</sup>), keine Messwerte.</p>`;
   }
 
   // ---------- Cutout ----------
