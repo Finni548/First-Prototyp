@@ -281,6 +281,33 @@ window.Scene3D = (function () {
         flush();
       });
     }
+    // Höhenlinien (Marching Squares) – feine Topografie-Linien
+    if (opt.contours) {
+      const step = opt.contours, minor = [], major = [];
+      let eMin = 1e9, eMax = -1e9; for (let k = 0; k < N; k++) { eMin = Math.min(eMin, EL[k]); eMax = Math.max(eMax, EL[k]); }
+      const P = (k) => [pos.getX(k), pos.getZ(k)];
+      for (let lv = Math.ceil(eMin / step) * step; lv < eMax; lv += step) {
+        const out = lv % (step * 5) === 0 ? major : minor, y = eToY(lv) + 0.006;
+        for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+          const k = [j * nx + i, j * nx + i + 1, (j + 1) * nx + i + 1, (j + 1) * nx + i];
+          const e = k.map((q) => EL[q]);
+          const pts = [];
+          for (let a = 0; a < 4; a++) {
+            const b = (a + 1) % 4;
+            if ((e[a] < lv) !== (e[b] < lv)) {
+              const t = (lv - e[a]) / (e[b] - e[a]), pa = P(k[a]), pb = P(k[b]);
+              pts.push(pa[0] + (pb[0] - pa[0]) * t, y, pa[1] + (pb[1] - pa[1]) * t);
+            }
+          }
+          if (pts.length === 6) out.push(...pts);
+          else if (pts.length === 12) out.push(...pts);
+        }
+      }
+      const mk = (arr, op) => { const g2 = new THREE.BufferGeometry(); g2.setAttribute("position", new THREE.Float32BufferAttribute(arr, 3));
+        return new THREE.LineSegments(g2, new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: op })); };
+      group.add(mk(minor, 0.18), mk(major, 0.45));
+    }
+
     if (opt.glass !== false) group.add(glassBox(W + 0.25, opt.glassH || 2.6, DEP + 0.25, BASE - 0.01, opt.glassOpacity ?? 0.22, opt.glassTint ?? 0.18));
     if (opt.shadow !== false) group.add(groundShadow(W * 1.6, DEP * 1.9, BASE - 0.02));
 
@@ -337,8 +364,11 @@ window.Scene3D = (function () {
 
   function buildIceCube(opt = {}) {
     const group = new THREE.Group();
-    const N = 56, S = 70;
-    const ci = (8.0 - T.lon0) / (T.lon1 - T.lon0) * (NX - 1), cj = (T.lat1 - 46.25) / (T.lat1 - T.lat0) * (NY - 1);
+    // opt.lon/lat/span: welcher Relief-Ausschnitt die Eis-Oberfläche formt
+    // opt.frac(year): Anteil des Eises von 1970 (Standard: alle Schweizer Gletscher)
+    const N = 56, S = opt.span ?? 70;
+    const frac = opt.frac || ((y) => D.vol(y) / D.V0);
+    const ci = ((opt.lon ?? 8.0) - T.lon0) / (T.lon1 - T.lon0) * (NX - 1), cj = (T.lat1 - (opt.lat ?? 46.25)) / (T.lat1 - T.lat0) * (NY - 1);
     let mn = 1e9, mx = -1e9; const rel = [];
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const lon = T.lon0 + (ci - S / 2 + i / (N - 1) * S) / (NX - 1) * (T.lon1 - T.lon0);
@@ -379,7 +409,7 @@ window.Scene3D = (function () {
     const COL = { line: new THREE.Color("#7fb8ec"), hot: C.hot, glow: new THREE.Color("#2d41d3"), face: new THREE.Color("#a9d1f5"), faceGlow: new THREE.Color("#4d6dff") };
     const layers = {};
     D.years.forEach((yr) => {
-      const f = D.vol(yr) / D.V0, hot = !!D.hotSummers[yr], major = yr % 5 === 0;
+      const f = frac(yr), hot = !!D.hotSummers[yr], major = yr % 5 === 0;
       const face = new THREE.Mesh(top, new THREE.MeshBasicMaterial({ color: COL.face, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
       face.scale.y = f; face.position.y = 0.006; face.renderOrder = 2;
       const rim = new THREE.Line(rimGeo, new THREE.LineBasicMaterial({ color: hot ? COL.hot : COL.line, transparent: true, opacity: 0.4 }));
@@ -402,20 +432,20 @@ window.Scene3D = (function () {
         L.rim.material.opacity = glow ? 1 : L.hot ? 0.7 : L.major ? 0.45 : 0.16;
       });
     }
-    function setYear(y) { year = y; target = D.vol(y) / D.V0; paint(); }
+    function setYear(y) { year = y; target = frac(y); paint(); }
     function highlight(set) { lit = new Set(set); paint(); }
     function tick(dt) { current += (target - current) * Math.min(1, dt * 6); body.scale.y = current; }
 
     // Jahr zu einer Höhe am Glas (für Maus-Hover)
     function yearAtHeight(y) {
       let best = null, bd = 1e9;
-      D.years.forEach((yr) => { if (yr > year) return; const d = Math.abs(iceLevelY(D.vol(yr) / D.V0) - y); if (d < bd) { bd = d; best = yr; } });
+      D.years.forEach((yr) => { if (yr > year) return; const d = Math.abs(iceLevelY(frac(yr)) - y); if (d < bd) { bd = d; best = yr; } });
       return bd < 0.12 ? best : null;
     }
     // Punkt auf dem Rand (rechts vorne) einer Jahres-Ebene – für Beschriftungen
     const cornerK = (N - 1) * N + N - 1, corners = [0, N - 1, N * N - 1, (N - 1) * N];
-    const rimPoint = (yr) => new THREE.Vector3(tp.getX(cornerK), tp.getY(cornerK) * D.vol(yr) / D.V0, tp.getZ(cornerK));
-    const rimCorners = (yr) => corners.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k) * D.vol(yr) / D.V0, tp.getZ(k)));
+    const rimPoint = (yr) => new THREE.Vector3(tp.getX(cornerK), tp.getY(cornerK) * frac(yr), tp.getZ(cornerK));
+    const rimCorners = (yr) => corners.map((k) => new THREE.Vector3(tp.getX(k), tp.getY(k) * frac(yr), tp.getZ(k)));
 
     // Gipfel für Gletscher-Markierungen (je Block der höchste Punkt)
     const peaks = [];
@@ -428,7 +458,7 @@ window.Scene3D = (function () {
     }
     const surfaceAt = (p) => new THREE.Vector3(p.x, p.y * current, p.z);
 
-    return { group, setYear, tick, highlight, yearAtHeight, rimPoint, rimCorners, peaks, surfaceAt, CUBE, levelY: iceLevelY };
+    return { group, setYear, tick, highlight, yearAtHeight, rimPoint, rimCorners, peaks, surfaceAt, frac, CUBE, levelY: iceLevelY };
   }
 
   // ===================================================================

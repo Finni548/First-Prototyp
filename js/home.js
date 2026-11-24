@@ -1,35 +1,31 @@
 /* =========================================================================
-   Startseite – Rahmen für die drei Zustände
-   overview : Karte gross links, Cube rechts (dreht sich)
-   cube     : Cube gross, Karte bleibt blass oben links im Hintergrund
-   glacier  : ein Gletscher in Jahres-Layers, oben links ein echtes Foto
-   Der Inhalt des Cubes selbst steckt in cubeview.js
+   Startseite – Rahmen für alle Zustände
+   Cube-Weg : overview → cube → glacier
+   Karten-Weg: overview → map → area → probe
+   Inhalt von Karte bzw. Cube: mapview.js / cubeview.js / glacierview.js / probe.js
    ========================================================================= */
 window.Home = (function () {
   const D = GLACIER_DATA;
-  let mapStage, dio, page, lastMode = null;
+  const ALL = ["overview", "cube", "glacier", "map", "area", "probe"];
+  const BACK = { cube: "home", glacier: "cube", map: "home", area: "map", probe: "area" };
+  let page, lastMode = null;
 
   function rotator() {
     const words = ["schmilzt.", "verschwindet.", "wird zu Wasser.", "verändert die Alpen."];
     const el = document.querySelector(".rotator");
     let i = 0;
     setInterval(() => {
-      if (App.state.page !== "home" || App.state.mode !== "overview") return;
+      if (App.state.mode !== "overview") return;
       el.querySelector(".rot-word").classList.add("out");
       setTimeout(() => { i = (i + 1) % words.length; el.innerHTML = `<span class="rot-word">${words[i]}</span>`; }, 420);
     }, 2800);
   }
 
   function onRoute(s) {
-    const mode = s.page === "home" ? s.mode : null;
-    page.classList.remove("state-overview", "state-cube", "state-glacier");
-    if (mode) page.classList.add("state-" + mode);
-    mapStage.active = s.page === "home" && mode !== "glacier";
-
-    if (mode === "glacier") {
-      const g = App.glacierById(s.glacier);
-      App.$("t-glacier-name").textContent = g.name;
-    }
+    const mode = s.mode;
+    ALL.forEach((m) => page.classList.toggle("state-" + m, m === mode));
+    const g = s.glacier ? App.glacierById(s.glacier) : null;
+    if (g) document.querySelectorAll(".t-gname").forEach((e) => (e.textContent = g.name));
     // Zeitleiste: im Cube-Modus läuft sie von selbst
     if (mode === "cube" && lastMode !== "cube") Timeline.play({ loop: true, fromStart: lastMode === "overview" });
     if (mode !== "cube" && lastMode === "cube") Timeline.stop();
@@ -39,27 +35,14 @@ window.Home = (function () {
   function init() {
     page = App.$("page-home");
     rotator();
-
-    // ---- Karte (links / blass im Hintergrund) ----
-    mapStage = Scene3D.createStage(App.$("home-map-stage"), { fov: 28, theta: -0.3, phi: 0.9, radius: 17.5, target: [0, 0.35, 0] });
-    dio = Scene3D.buildRelief({ glassH: 2.4 });
-    mapStage.scene.add(dio.group);
-    const panel = App.$("panel-map");
-    let tilt = 0;
-    panel.addEventListener("pointermove", (e) => { const r = panel.getBoundingClientRect(); tilt = (e.clientX - r.left) / r.width - 0.5; });
-    panel.addEventListener("pointerleave", () => (tilt = 0));
-    mapStage.onFrame = (dt) => { const o = mapStage.orbit; o.theta += ((-0.3 + tilt * 0.5) - o.theta) * Math.min(1, dt * 3); };
-    panel.addEventListener("click", () => App.go("map"));
-    panel.addEventListener("keydown", (e) => { if (e.key === "Enter") App.go("map"); });
-
-    App.$("back-btn").addEventListener("click", () => App.go(App.state.mode === "glacier" ? "cube" : "home"));
-
+    App.$("back-btn").addEventListener("click", () => {
+      const m = App.state.mode, to = BACK[m] || "home";
+      App.go(to === "cube" || to === "map" || to === "home" ? to : `${to}/${App.state.glacier}`);
+    });
     App.onChange((s, what) => {
       if (what === "route") onRoute(s);
-      dio.setYear(s.year);
-      App.$("t-cube-year").textContent = s.year;
+      document.querySelectorAll(".t-year").forEach((e) => (e.textContent = s.year));
     });
-    dio.setYear(App.state.year);
   }
 
   return { init };

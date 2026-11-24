@@ -40,14 +40,20 @@
       <div class="home-title">
         <p class="eyebrow" id="home-eyebrow">Data Visualisation · Schweizer Gletscher 1970–2026</p>
         <h1 class="t-overview">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
-        <h1 class="t-cube">Alle Gletscher <em id="t-cube-year">2026</em></h1>
-        <h1 class="t-glacier"><span id="t-glacier-name">Gletscher</span> <em>1970–2026</em></h1>
+        <h1 class="t-cube">Alle Gletscher <em class="t-year">2026</em></h1>
+        <h1 class="t-glacier"><span class="t-gname">Gletscher</span> <em>1970–2026</em></h1>
+        <h1 class="t-map">Karte <em>· alle Gletscher</em></h1>
+        <h1 class="t-area"><span class="t-gname">Gletscher</span> <em>· Gebiet</em></h1>
+        <h1 class="t-probe">Kernbohrung <em id="pr-title">–</em></h1>
       </div>
 
       <!-- Karte (bleibt im Cube-Modus blass oben links) -->
       <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Karte öffnen">
         <div class="panel-stage" id="home-map-stage"></div>
+        <div class="label-layer" id="map-labels"></div>
         <span class="panel-tag">Map <span aria-hidden="true">↗</span></span>
+        <p class="map-hint">Gletscher anklicken · ziehen = drehen · scrollen = zoomen</p>
+        <p class="area-hint">Bohrkern anklicken · Höhenlinien alle 100 m · ziehen = drehen</p>
       </div>
 
       <!-- Der Cube -->
@@ -56,22 +62,13 @@
         <div class="label-layer" id="cube-labels"></div>
         <div class="year-layer" id="cube-years"><svg></svg></div>
 
-        <!-- Gletscher-Ansicht: Foto + Cutout mit Jahres-Profilen -->
+        <!-- Gletscher-Ansicht: Berg-Foto + Cutout-Fenster (hinter dem Würfel) -->
         <div class="gview" id="gview" hidden>
-          <img class="gv-photo" id="gv-photo" alt="" hidden>
-          <svg class="gv-fallback" id="gv-fallback" aria-hidden="true"></svg>
+          <img class="gv-mountain" id="gv-mountain" alt="Verschneiter Berggipfel">
+          <canvas class="gv-hole" id="gv-hole" aria-hidden="true"></canvas>
+          <canvas class="gv-slab" id="gv-slab" aria-hidden="true"></canvas>
+          <div class="gv-window" id="gv-window"><span class="gv-window-title">Cutout · Jahres-Ebenen</span></div>
           <div class="gv-table" id="gv-table"></div>
-          <div class="gv-cut" id="gv-cut"><svg id="gv-svg"></svg><span class="gv-cut-title">Höhenprofil · eine Linie pro Jahr</span></div>
-          <div class="gv-side">
-            <div class="gv-row"><span>Legende</span><b>Jahres-Ebenen</b></div>
-            <div class="gv-legend"><i></i><span>1970</span><span>2026</span></div>
-            <div class="gv-row"><span>Fels</span><b>schraffiert</b></div>
-            <div class="gv-row"><span>Eis</span><b>gewähltes Jahr</b></div>
-            <div class="gv-row"><span>- - -</span><b>Oberfläche 1970</b></div>
-            <div class="gv-row"><span>Zylinder</span><b>Eiskernbohrung</b></div>
-            <p class="gv-foot">Maus auf eine Linie = sie leuchtet · Klick = Jahr wählen</p>
-            <p class="gv-hint" id="gv-hint"></p>
-          </div>
         </div>
         <span class="panel-tag">Cube · alle Gletscher <span aria-hidden="true">↗</span></span>
         <p class="cube-hint" id="cube-hint">Maus auf eine Ebene = sie leuchtet · Klick = festhalten · Zylinder = Gletscher öffnen · ziehen = drehen</p>
@@ -88,20 +85,32 @@
         </div>
       </div>
 
+      <!-- Kernbohrung (Skizze 2A) -->
+      <section class="probe" id="probe" hidden aria-label="Kernbohrung">
+        <figure class="pr-photo-card">
+          <img id="pr-photo" alt="Gletscher-Gebiet">
+          <span class="pr-marker" aria-hidden="true"><i></i></span>
+          <figcaption><span class="eyebrow">Bohrstelle</span> <b id="pr-site">–</b></figcaption>
+        </figure>
+        <div class="pr-core" id="pr-core">
+          <div class="pr-head"><span class="pr-badge" id="pr-badge">Platzhalter</span><p id="pr-sub"></p><p class="pr-after" id="pr-after"></p></div>
+          <svg id="pr-svg"></svg>
+          <p class="pr-note" id="pr-note"></p>
+        </div>
+        <aside class="pr-side">
+          <figure class="pr-ice">
+            <img id="pr-icecore" alt="Echter Eiskern mit sichtbaren Jahresschichten" hidden>
+            <div class="pr-ice-ph" id="pr-icecore-ph" hidden><span>Foto Eiskern lädt aus dem Internet –<br>oder lokal ablegen: <code>img/eiskern.jpg</code></span></div>
+            <figcaption>Echter Eiskern mit Jahresschichten (GISP2, 1837 m Tiefe) · Foto: National Ice Core Laboratory / USGS, gemeinfrei, via Wikimedia Commons</figcaption>
+          </figure>
+          <button class="pr-toggle" id="pr-toggle" aria-pressed="false"><span class="sw"><i></i></span> Real Data</button>
+          <div class="pr-table-wrap" id="pr-table-wrap"><div class="pr-table" id="pr-table"></div></div>
+        </aside>
+      </section>
+
       <button class="back-btn" id="back-btn" aria-label="Zurück">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v7a3 3 0 0 1-3 3H6 M10 11l-4 4 4 4"/></svg>
       </button>
-    </section>
-
-    <!-- ================= Karte (eigene Seite) ================= -->
-    <section class="page page-detail" id="page-map">
-      <div class="stage3d" id="map-stage"></div>
-      <div class="label-layer" id="map-labels"></div>
-      <div class="detail-head">
-        <a class="pill pill-light back" href="#home" data-go="home">← Übersicht</a>
-        <h2>Gletscher <em>auf der Karte</em></h2>
-        <p>Ziehen zum Drehen · Scrollen zum Zoomen · Gletscher anklicken öffnet ihn im Cube</p>
-      </div>
     </section>
 
     <!-- Zahlen-Karte -->
@@ -138,6 +147,7 @@
 <script src="js/vendor/three.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/switzerland.js"></script>
+<script src="img/berg-cutout.js"></script>
 <script src="js/scene.js"></script>
 <script src="js/main.js"></script>
 <script src="js/timeline.js"></script>
@@ -145,6 +155,7 @@
 <script src="js/glacierview.js"></script>
 <script src="js/cubeview.js"></script>
 <script src="js/mapview.js"></script>
+<script src="js/probe.js"></script>
 <script>App.start();</script>
 </body>
 </html>

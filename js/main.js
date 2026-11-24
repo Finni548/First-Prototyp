@@ -5,7 +5,7 @@
    ========================================================================= */
 window.App = (function () {
   const D = window.GLACIER_DATA;
-  const state = { year: D.LAST, page: "home", mode: "overview", glacier: null };
+  const state = { year: D.LAST, page: "home", mode: "overview", glacier: null, core: null };
   const listeners = [];
 
   const fmt = (n, d = 1) => n.toLocaleString("de-CH", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -22,25 +22,29 @@ window.App = (function () {
     state.year = y; emit("year");
   }
 
-  // Route: "home" | "cube" | "glacier/<id>" | "map"
+  // Routen
+  //   Cube-Weg : "home" → "cube" → "glacier/<id>"
+  //   Karten-Weg: "map" → "area/<id>" → "probe/<id>/<kern>"
+  const MODES = ["overview", "cube", "glacier", "map", "area", "probe"];
   function go(route) {
-    const [r, id] = (route || "home").split("/");
-    if (r === "map") { state.page = "map"; }
-    else {
-      state.page = "home";
-      state.mode = r === "cube" ? "cube" : r === "glacier" && glacierById(id) ? "glacier" : "overview";
-      state.glacier = state.mode === "glacier" ? id : null;
-    }
-    document.querySelectorAll(".page").forEach((p) => p.classList.toggle("is-active", p.id === "page-" + state.page));
-    document.body.classList.toggle("detail", state.page === "map" || state.mode !== "overview");
-    document.body.classList.toggle("on-map", state.page === "map");
-    document.body.classList.toggle("glacier-mode", state.page === "home" && state.mode === "glacier");
-    const navKey = state.page === "map" ? "map" : state.mode === "overview" ? "home" : "cube";
+    const [r, id, core] = (route || "home").split("/");
+    let mode = r === "home" ? "overview" : r;
+    if (!MODES.includes(mode)) mode = "overview";
+    if (["glacier", "area", "probe"].includes(mode) && !glacierById(id)) mode = "overview";
+    state.page = "home";
+    state.mode = mode;
+    state.glacier = ["glacier", "area", "probe"].includes(mode) ? id : null;
+    state.core = mode === "probe" ? (core || "k1") : null;
+    document.body.classList.toggle("detail", mode !== "overview");
+    document.body.classList.toggle("glacier-mode", mode === "glacier" || mode === "probe");
+    const navKey = ["map", "area", "probe"].includes(mode) ? "map" : mode === "overview" ? "home" : "cube";
     document.querySelectorAll(".main-nav a").forEach((a) => a.classList.toggle("is-active", a.dataset.go === navKey));
-    history.replaceState(null, "", "#" + (state.page === "map" ? "map" : state.mode === "glacier" ? "glacier/" + state.glacier : state.mode === "cube" ? "cube" : "home"));
+    const hash = mode === "overview" ? "home" : mode === "probe" ? `probe/${id}/${state.core}` : state.glacier ? `${mode}/${id}` : mode;
+    history.replaceState(null, "", "#" + hash);
     emit("route");
   }
   const openGlacier = (id) => go("glacier/" + id);
+  const openProbe = (id, core) => go(`probe/${id}/${core}`);
 
   // ---------- Tooltip ----------
   function showTip(html, evt) {
@@ -54,7 +58,7 @@ window.App = (function () {
   // ---------- Zahlen-Karte ----------
   function renderInfo() {
     const y = state.year;
-    const g = state.mode === "glacier" && state.page === "home" ? glacierById(state.glacier) : null;
+    const g = ["glacier", "area", "probe"].includes(state.mode) ? glacierById(state.glacier) : null;
     if (g) {
       const a = D.area(g, y), a0 = D.area(g, D.FIRST), prev = y > D.FIRST ? D.area(g, y - 1) : a;
       $("info-kicker").innerHTML = `${g.name} · <b id="info-year">${y}</b>`;
@@ -126,9 +130,10 @@ window.App = (function () {
     GlacierView.init();
     CubeView.init();
     MapView.init();
+    Probe.init();
 
     go(location.hash.replace("#", "") || "home");
   }
 
-  return { state, D, setYear, go, openGlacier, glacierById, onChange, emit, start, fmt, signed, $, showTip, hideTip };
+  return { state, D, setYear, go, openGlacier, openProbe, glacierById, onChange, emit, start, fmt, signed, $, showTip, hideTip };
 })();

@@ -74,6 +74,48 @@ window.GLACIER_DATA = (function () {
     { id: "pizol",      name: "Pizolgletscher",           canton: "SG", lon: 9.39, lat: 46.96, a1973: 0.3,  a2016: 0.1,  goneYear: 2019, goneText: "2019 offiziell verabschiedet" }
   ];
 
+  // ECHTE Eiskern-Bohrungen in der Schweiz (Quellen siehe Links)
+  const realCores = [
+    {
+      id: "cg", name: "Colle Gnifetti", lon: 7.876, lat: 45.929,
+      where: "Monte Rosa, Sattel des Grenzgletschers (Gornergletscher-System), VS",
+      elev: "ca. 4450–4500 m ü. M.",
+      drilled: "2021 (Ice Memory)", length: 82, toBedrock: true,
+      span: "bis ca. 10 000 Jahre", institutes: "PSI · CNR · Univ. Ca' Foscari Venedig",
+      facts: [
+        ["Erste Bohrung hier", "1976"],
+        ["2013", "Kern ca. 73 m bis zum Fels"],
+        ["2021", "2 tiefe Kerne bis Fels in 82 m + 3 kurze (15–22 m)"],
+        ["Archiv", "ein Kern wird in der Antarktis eingelagert"]
+      ],
+      sources: [
+        ["PSI – Ice Memory Mission accomplished", "https://www.psi.ch/en/news/psi-stories/ice-memory-mission-accomplished"],
+        ["Ice Memory – Monte Rosa 2021", "https://www.ice-memory.org/collecting-ice-cores/2021-monte-rosa-italy/"]
+      ],
+      // Tiefe ↔ Jahr hier im Prototyp nicht bekannt → Schichten SCHEMATISCH in den obersten 20 m
+      // (Colle Gnifetti hat sehr wenig Schneezuwachs, die jüngsten Jahrzehnte liegen nahe der Oberfläche)
+      depthYear: (y) => (y > 2021 ? null : (2021 - y) / (2021 - 1970) * 20), schematicLayers: true
+    },
+    {
+      id: "fh", name: "Fiescherhorn", lon: 8.067, lat: 46.551,
+      where: "Fiescherhorn-Gletscher, Berner Oberland (46°33′ N, 8°04′ E)",
+      elev: "ca. 3900 m ü. M.",
+      drilled: "Dezember 2002 (PSI)", length: 150, toBedrock: false,
+      span: "ca. 1660–2002 (Basisalter 340 ± 30 Jahre)", institutes: "Paul Scherrer Institut · Univ. Bern",
+      facts: [
+        ["Oberste 108 m", "≈ 1943–2002"],
+        ["Früherer Kern", "77 m (1989)"],
+        ["Datierung", "Jahresschichten gezählt + Atombomben-Marker 1956/1963"]
+      ],
+      sources: [
+        ["HFSJG Activity Report 2003", "https://www.hfsjg.ch/reports/2003/pdf/23.pdf"],
+        ["Jenk 2006, Diss. Univ. Bern", "https://biblio.unibe.ch/download/eldiss/06jenk_tabs.pdf"]
+      ],
+      // Tiefe in m für ein Jahr (linear: 2002 = 0 m, 1943 = 108 m – Näherung)
+      depthYear: (y) => (y > 2002 ? null : (2002 - y) / (2002 - 1943) * 108)
+    }
+  ];
+
   const FIRST = 1970, LAST = 2026;
   const years = [];
   for (let y = FIRST; y <= LAST; y++) years.push(y);
@@ -94,5 +136,5 @@ window.GLACIER_DATA = (function () {
     return Math.max(0.02, g.a2016 + (g.a1973 - g.a2016) * Math.min(f, 1.05));
   }
 
-  return { volume, hotSummers, events, glaciers, years, FIRST, LAST, V0, BIELERSEE, vol, change, changePct, area };
+  return { volume, hotSummers, events, glaciers, realCores, years, FIRST, LAST, V0, BIELERSEE, vol, change, changePct, area };
 })();
