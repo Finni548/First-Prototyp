@@ -32,7 +32,7 @@ window.Home = (function () {
         lede: "Jede Ebene ist ein Jahr. Fahre über eine Ebene, um sie hervorzuheben, ein Klick hält sie fest. Die Zylinder öffnen einzelne Gletscher.",
         crumbs: [C("Übersicht", "home"), C("Alle Gletscher")] },
       glacier: g && { title: g.name,
-        lede: "Derselbe Würfel, nur für diesen Gletscher: eine Eis-Ebene pro Jahr, modelliert aus seiner Fläche.",
+        lede: "Das Gebiet in Ebenen zerlegt: Höhenkarte 1970, Relief 1985, Höhenlinien 2000 und oben die Oberfläche im gewählten Jahr.",
         crumbs: [C("Übersicht", "home"), C("Alle Gletscher", "cube"), C(g.name)] },
       map: { title: "Karte der Gletscher",
         lede: "Wähle einen Gletscher, um sein Gebiet zu öffnen. Ziehen dreht die Karte, Scrollen zoomt.",

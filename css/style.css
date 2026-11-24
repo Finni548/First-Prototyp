@@ -4,28 +4,28 @@
    Orange nur für heisse Sommer. Serif nur für Titel & grosse Zahlen.
    ===================================================================== */
 :root {
-  /* Farben */
-  --paper:  #fbfaf7;   /* Firn – Hintergrund überall */
-  --white:  #ffffff;   /* Karten, Tabellen */
-  --rule:   #e2e0d9;   /* Haarlinie */
-  --rule-2: #cfccc3;
-  --ink:    #1d2330;   /* Fels – Text */
-  --ink-2:  #646a78;   /* Moräne – Nebentext */
-  --blue:   #2e48cf;   /* Gletscherblau – gemeint / gewählt */
+  /* Farben: nur Grau-Schwarz-Weiss + ein Blau */
+  --paper:  #e9eaec;   /* ruhiges Hellgrau – Hintergrund überall */
+  --white:  #f4f5f6;   /* helle Flächen */
+  --rule:   #c9cbcf;   /* feine Linie */
+  --rule-2: #a9adb3;
+  --ink:    #2a2f37;   /* Schiefer – Text & Strukturlinien */
+  --ink-2:  #777c85;   /* Nebentext */
+  --blue:   #2e48cf;   /* 2026 / gewählt */
   --blue-soft: rgba(46,72,207,.14);
-  --ice:    #cfe5f8;   /* Eis-Flächen, Zeitleiste */
-  --melt:   #d9643a;   /* nur heisse Sommer */
+  --ice:    #cfe1f1;
+  --melt:   var(--ink);  /* kein Orange mehr: heisse Sommer = dunkel */
 
-  /* Schrift */
-  --serif: "Fraunces", Georgia, serif;
-  --sans:  "Manrope", system-ui, -apple-system, sans-serif;
-  --fs-xs: 12px;  --fs-s: 14px;  --fs-m: 18px;  --fs-l: 28px;  --fs-xl: 44px;  --fs-xxl: 64px;
+  /* Schrift: eine Familie */
+  --serif: "Montserrat", system-ui, sans-serif;
+  --sans:  "Montserrat", system-ui, sans-serif;
+  --fs-xs: 11px;  --fs-s: 13px;  --fs-m: 16px;  --fs-l: 24px;  --fs-xl: 38px;  --fs-xxl: 54px;
 
   /* Raster */
-  --pad: clamp(24px, 3.2vw, 48px);
-  --tl-w: 112px;
-  --head: 150px;          /* Höhe des Ansicht-Kopfs */
-  --radius: 6px;
+  --pad: clamp(24px, 3.4vw, 52px);
+  --tl-w: 104px;
+  --head: 160px;
+  --radius: 0px;
   --ease: cubic-bezier(.65, 0, .25, 1);
 }
 
@@ -82,7 +82,7 @@ a { color: inherit; }
 
 /* ---------- Seite ---------- */
 .page { position: absolute; inset: 0; }
-.page-home:not(.state-overview) { --head: 196px; }
+.page-home:not(.state-overview) { --head: 190px; }
 
 /* Kopf jeder Ansicht */
 .view-head { position: absolute; left: var(--pad); top: 22px; right: calc(var(--pad) + 280px); z-index: 6; pointer-events: none; }
@@ -313,3 +313,128 @@ body.glacier-mode .info-card { opacity: 0; pointer-events: none; }
   .search input { width: 120px; }
   .view-head { right: var(--pad); }
 }
+
+/* =====================================================================
+   Ruhige Ästhetik (Referenzen: "Digitised Land", "Feel more on the road")
+   feine Linien statt Kästen, keine Rundungen, Montserrat, schwarz/weiss/blau
+   ===================================================================== */
+body { letter-spacing: .01em; }
+.card { background: transparent; border: 0; border-top: 1px solid var(--ink); border-radius: 0; }
+.rows > div { border-top-color: var(--rule); }
+
+/* Kopfzeile: Wortmarke mit gekreuzten Linien, Navigation mit Rahmen */
+.site-header { padding: 12px var(--pad); border-bottom: 0; position: relative; }
+.site-header::after { content: ""; position: absolute; left: var(--pad); right: var(--pad); bottom: 0; height: 1px; background: var(--ink); }
+.logo { font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; line-height: 1.05; padding: 4px 0 4px 14px; border-left: 1px solid var(--ink); }
+.main-nav { gap: 6px; }
+.main-nav a { padding: 5px 18px; border: 1px solid transparent; font-size: var(--fs-s); color: var(--ink); }
+.main-nav a:hover { border-color: var(--rule-2); }
+.main-nav a.is-active { border-color: var(--ink); }
+.search { border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; background: transparent; padding: 2px 0 2px 2px; }
+.search input { font-size: var(--fs-s); }
+
+/* Titel */
+#view-title { font-family: var(--sans); font-weight: 400; letter-spacing: .01em; }
+.state-overview #view-title { font-weight: 600; text-transform: uppercase; letter-spacing: .03em; line-height: 1.08; font-size: var(--fs-xxl); }
+.state-overview .view-head { padding-left: 20px; }
+.state-overview .view-head::before { content: ""; position: absolute; left: 0; top: -10px; bottom: 4px; width: 1px; background: var(--ink); }
+.view-lede { color: var(--ink-2); }
+.crumbs ol { font-size: var(--fs-xs); }
+.back-btn { border-radius: 0; border-color: var(--ink); background: transparent; }
+
+/* Panels ohne Kästen */
+.panel { border: 0; border-radius: 0; background: transparent; }
+.state-overview .panel-map, .state-overview .panel-cube { border-top: 1px solid var(--ink); }
+.state-overview .panel-map:hover, .state-overview .panel-cube:hover { border-color: var(--ink); }
+.panel-tag { left: 0; top: 10px; color: var(--ink); font-size: var(--fs-xs); letter-spacing: .04em; }
+.state-cube .panel-cube, .state-glacier .panel-cube { background: rgba(233,234,236,.55); }
+.state-area .panel-cube { background: var(--paper); border-top: 1px solid var(--ink); }
+.home-text { padding: 14px 0 0; }
+.stats dd { font-family: var(--sans); font-weight: 300; font-size: var(--fs-l); }
+
+/* Bilder mit feinem Innenrahmen */
+.figure-img { border: 0; border-radius: 0; background: var(--white); }
+.figure-img::after { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(255,255,255,.75); pointer-events: none; }
+.badge, .badge.real { border-radius: 0; border-color: var(--ink); color: var(--ink); }
+.switch { border-radius: 0; border-color: var(--ink); background: transparent; }
+.switch .sw, .switch .sw i { border-radius: 0; }
+.pin-bar, .pin-bar button, .pr-jump { border-radius: 0; }
+.pr-core { border-color: var(--rule); }
+.pr-marker i { box-shadow: 0 0 0 5px var(--blue-soft); }
+.tooltip { border-radius: 0; border-color: var(--ink); }
+
+/* Zahlen-Karte als ruhiger Block mit Linie */
+.info-card { background: rgba(233,234,236,.88); padding: 12px 0 0; width: 260px; }
+.hero-num { font-family: var(--sans); font-weight: 300; }
+.bar { height: 1px; background: var(--rule-2); }
+.bar span { height: 3px; margin-top: -1px; }
+
+/* Beschriftungen in 3D */
+.glabel .gl-text, .ylab { text-shadow: 0 0 2px var(--paper), 0 0 4px var(--paper), 0 0 6px var(--paper); }
+.glabel .gl-name { font-weight: 500; }
+.glabel.gone .gl-name { color: var(--ink-2); }
+.glabel.gone .gl-dot { background: var(--ink-2); }
+.ylab.hot b { color: var(--ink); }
+.year-layer path.hot { stroke: rgba(42,47,55,.55); }
+
+/* Zeitleiste: nur Jahreszahlen, 2026 blau */
+.timeline { border-left: 1px solid var(--ink); gap: 10px; padding: 14px 0 14px; }
+.tl-big { font-family: var(--sans); font-weight: 500; font-size: 22px; border-bottom: 1px solid var(--ink); }
+.tl-big.is-now { color: var(--blue); }
+.play { border-radius: 0; border-color: var(--ink); background: transparent; width: 32px; height: 32px; }
+.play.is-playing { border-color: var(--ink); }
+.play.is-playing svg { fill: var(--ink); }
+.tl-track { margin: 0 8px; cursor: pointer; }
+.tl-list { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; touch-action: none; }
+.tl-year { border: 0; background: none; padding: 0; line-height: 1; font-size: 9.5px; color: var(--rule-2); font-variant-numeric: tabular-nums; cursor: pointer; transition: color .15s, font-size .15s; }
+.tl-year.major { color: var(--ink-2); }
+.tl-year:hover { color: var(--ink); }
+.tl-year.is-sel { color: var(--ink); font-weight: 600; font-size: 12px; }
+.tl-year.is-now { color: var(--blue); font-weight: 600; font-size: 11px; }
+.tl-year.is-now.is-sel { font-size: 12px; }
+
+/* Explosionszeichnung (Gletscher-Ebenen) */
+.gview { z-index: 2; pointer-events: none; }
+.ex-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ex-lines path { fill: none; stroke: var(--ink-2); stroke-width: 1; }
+.ex-lines path.on { stroke: var(--blue); }
+.ex-labels { position: absolute; inset: 0; }
+.ex-label { position: absolute; left: 0; top: 0; width: 170px; text-align: center; font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.45; pointer-events: auto; cursor: pointer; will-change: transform; }
+.ex-label b { display: block; color: var(--ink); font-weight: 500; font-size: var(--fs-s); }
+.ex-label.on b, .ex-label.on { color: var(--blue); }
+.ex-side { position: absolute; right: 0; top: 0; width: 150px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+.ex-thumb { margin: 0; }
+.ex-thumb canvas { display: block; width: 100%; aspect-ratio: 1.15; }
+.ex-thumb figcaption { font-size: var(--fs-xs); color: var(--ink-2); text-align: center; margin-top: 4px; }
+.ex-thumb.on figcaption { color: var(--blue); }
+.ex-note { font-size: var(--fs-xs); color: var(--ink-2); text-align: center; line-height: 1.5; margin: 4px 0 0; }
+
+/* =====================================================================
+   Startseite: keine schwarzen Linien, Karte & Cube als zwei helle Kästen,
+   die beim Darüberfahren etwas grösser werden
+   ===================================================================== */
+.site-header::after { background: var(--rule); }
+.logo { border-left: 0; padding-left: 0; }
+.timeline { border-left-color: var(--rule); }
+.tl-big { border-bottom-color: var(--rule); }
+.state-overview .view-head { padding-left: 0; }
+.state-overview .view-head::before { display: none; }
+.home-text.card { border-top: 0; }
+
+.state-overview .panel-map, .state-overview .panel-cube {
+  background: var(--paper); border: 1px solid var(--rule-2); border-top: 1px solid var(--rule-2);
+  transition: left .9s var(--ease), top .9s var(--ease), width .9s var(--ease), height .9s var(--ease),
+              opacity .6s ease, filter .6s ease, transform .35s var(--ease), box-shadow .35s ease, border-color .35s ease;
+}
+.state-overview .panel-map:hover, .state-overview .panel-cube:hover,
+.state-overview .panel-map:focus-visible, .state-overview .panel-cube:focus-visible {
+  transform: scale(1.025); border-color: var(--ink-2); box-shadow: 0 18px 40px -18px rgba(42,47,55,.35); z-index: 5;
+}
+.state-overview .panel-tag { left: 18px; top: 16px; }
+.panel-open {
+  position: absolute; right: 16px; bottom: 16px; z-index: 5; pointer-events: none;
+  font-size: var(--fs-xs); letter-spacing: .03em; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink-2); padding: 6px 14px; opacity: 0; transition: opacity .3s, background .3s, color .3s;
+}
+.state-overview .panel-open { opacity: .75; }
+.state-overview .panel:hover .panel-open, .state-overview .panel:focus-visible .panel-open { opacity: 1; background: var(--ink); color: var(--white); border-color: var(--ink); }

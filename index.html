@@ -6,7 +6,7 @@
   <title>Swiss Glaciers – Schweizer Gletscher 1970–2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,8 +15,7 @@
   <!-- ================= Kopfzeile ================= -->
   <header class="site-header">
     <a class="logo" href="#home" data-go="home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z M3 7l9 5 9-5 M12 12v10"/></svg>
-      Swiss Glaciers
+      Swiss<br>Glaciers
     </a>
     <nav class="main-nav" aria-label="Hauptnavigation">
       <a href="#home" data-go="home">Übersicht</a>
@@ -52,6 +51,7 @@
         <div class="panel-stage" id="home-map-stage"></div>
         <div class="label-layer" id="map-labels"></div>
         <span class="panel-tag">Karte</span>
+        <span class="panel-open" aria-hidden="true">Karte öffnen</span>
       </div>
 
       <!-- Cube -->
@@ -60,15 +60,14 @@
         <div class="label-layer" id="cube-labels"></div>
         <div class="year-layer" id="cube-years"><svg></svg></div>
 
-        <!-- Gletscher-Ansicht: Berg-Foto + Cutout (hinter dem Würfel) -->
+        <!-- Gletscher-Ansicht: Ebenen als Explosionszeichnung (Beschriftung links, Höhenkarten rechts) -->
         <div class="gview" id="gview" hidden>
-          <img class="gv-mountain" id="gv-mountain" alt="Verschneiter Berggipfel">
-          <canvas class="gv-hole" id="gv-hole" aria-hidden="true"></canvas>
-          <canvas class="gv-slab" id="gv-slab" aria-hidden="true"></canvas>
-          <div class="gv-window" id="gv-window"></div>
-          <div class="gv-table" id="gv-table"></div>
+          <svg class="ex-lines" id="ex-lines"></svg>
+          <div class="ex-labels" id="ex-labels"></div>
+          <aside class="ex-side" id="ex-side"></aside>
         </div>
         <span class="panel-tag" id="cube-tag">Cube</span>
+        <span class="panel-open" aria-hidden="true">Cube öffnen</span>
         <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 Ebene festgehalten</span><button id="pin-clear" type="button">Auswahl löschen</button></div>
       </div>
 
@@ -129,11 +128,9 @@
     <button class="play" id="play-btn" aria-label="Abspielen">
       <svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4l10 6-10 6z"/><path class="i-pause" d="M5 4h3v12H5zM12 4h3v12h-3z"/></svg>
     </button>
-    <div class="tl-track" id="tl-track" tabindex="0" role="slider" aria-valuemin="1970" aria-valuemax="2026" aria-valuenow="2026" aria-label="Jahr wählen">
-      <svg id="tl-svg"></svg>
-      <div class="tl-handle" id="tl-handle"><span id="tl-handle-year">2026</span></div>
+    <div class="tl-track" id="tl-track" role="slider" tabindex="0" aria-valuemin="1970" aria-valuemax="2026" aria-valuenow="2026" aria-label="Jahr wählen">
+      <div class="tl-list" id="tl-list"></div>
     </div>
-    <button class="today" id="today-btn">Heute</button>
   </aside>
 </div>
 

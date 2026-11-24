@@ -10,19 +10,19 @@ window.Scene3D = (function () {
   const T = window.SWISS_TERRAIN, D = window.GLACIER_DATA;
 
   const C = {
-    land:   new THREE.Color("#e3dfd6"),
-    rock:   new THREE.Color("#b9b1a2"),
-    high:   new THREE.Color("#f3f1ec"),
-    out:    new THREE.Color("#f2efe8"),
-    outHi:  new THREE.Color("#faf9f6"),
-    lake:   new THREE.Color("#b7d3ec"),
-    ice:    new THREE.Color("#7fb8ec"),
-    iceHi:  new THREE.Color("#cfe6fb"),
-    side:   new THREE.Color("#e9e3d6"),
-    sideLo: new THREE.Color("#d8d0bf"),
-    ink:    new THREE.Color("#1d2330"),
+    land:   new THREE.Color("#dcdddf"),
+    rock:   new THREE.Color("#9a9ea4"),
+    high:   new THREE.Color("#e6e7e9"),
+    out:    new THREE.Color("#dcdee4"),
+    outHi:  new THREE.Color("#dcdee4"),
+    lake:   new THREE.Color("#c3d6e8"),
+    ice:    new THREE.Color("#8fbfe8"),
+    iceHi:  new THREE.Color("#d6e8f7"),
+    side:   new THREE.Color("#dadbdd"),
+    sideLo: new THREE.Color("#c3c5c9"),
+    ink:    new THREE.Color("#2a2f37"),
     blue:   new THREE.Color("#2e48cf"),
-    hot:    new THREE.Color("#d9643a")
+    hot:    new THREE.Color("#2a2f37")
   };
 
   // ---------- Höhenmodell ----------
@@ -171,7 +171,7 @@ window.Scene3D = (function () {
   function glassBox(w, h, d, y0, opacity = 0.28, tint = 0.18) {
     const g = new THREE.Group();
     const geo = new THREE.BoxGeometry(w, h, d); geo.translate(0, y0 + h / 2, 0);
-    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity })));
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: opacity * 0.85 })));
     g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: tint, side: THREE.BackSide, depthWrite: false })));
     g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xeef6ff, transparent: true, opacity: tint * 0.45, depthWrite: false })));
     return g;
@@ -235,7 +235,8 @@ window.Scene3D = (function () {
     const base = new Float32Array(N * 3), tmp = new THREE.Color();
     for (let k = 0; k < N; k++) {
       const e = EL[k], m = MK[k];
-      if (m === 2) tmp.copy(C.lake);
+      if (opt.mono) tmp.set(opt.mono);
+      else if (m === 2) tmp.copy(C.lake);
       else if (m === 1 || opt.outsideFade === false) {
         tmp.copy(C.land).lerp(C.rock, Math.min(1, Math.max(0, (e - 500) / 2400)));
         if (e > 3000) tmp.lerp(C.high, Math.min(1, (e - 3000) / 900));
@@ -245,7 +246,9 @@ window.Scene3D = (function () {
     const col = new THREE.BufferAttribute(base.slice(), 3);
     geo.setAttribute("color", col);
     const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: !!opt.transparent, opacity: 1 });
-    group.add(new THREE.Mesh(geo, terrainMat));
+    const solid = new THREE.Group(); group.add(solid);     // Fläche + Seiten (bei "nur Höhenlinien" ausgeblendet)
+    solid.add(new THREE.Mesh(geo, terrainMat));
+    if (opt.contoursOnly) solid.visible = false;
 
     // Seitenwände
     const runs = [
@@ -262,10 +265,10 @@ window.Scene3D = (function () {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
       g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3)); g.setIndex(idx);
-      group.add(new THREE.Mesh(g, sideMat));
+      solid.add(new THREE.Mesh(g, sideMat));
     });
     const bottom = new THREE.Mesh(new THREE.PlaneGeometry(W, DEP), new THREE.MeshBasicMaterial({ color: C.sideLo, transparent: !!opt.transparent }));
-    bottom.rotation.x = Math.PI / 2; bottom.position.y = BASE; group.add(bottom);
+    bottom.rotation.x = Math.PI / 2; bottom.position.y = BASE; solid.add(bottom);
 
     // Landesgrenze (nur Teile innerhalb des Ausschnitts)
     if (opt.border !== false) {
@@ -305,11 +308,13 @@ window.Scene3D = (function () {
       }
       const mk = (arr, op) => { const g2 = new THREE.BufferGeometry(); g2.setAttribute("position", new THREE.Float32BufferAttribute(arr, 3));
         return new THREE.LineSegments(g2, new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: op })); };
-      group.add(mk(minor, 0.18), mk(major, 0.45));
+      group.add(mk(minor, opt.contoursOnly ? 0.35 : 0.18), mk(major, opt.contoursOnly ? 0.8 : 0.45));
     }
 
-    if (opt.glass !== false) group.add(glassBox(W + 0.25, opt.glassH || 2.6, DEP + 0.25, BASE - 0.01, opt.glassOpacity ?? 0.22, opt.glassTint ?? 0.18));
-    if (opt.shadow !== false) group.add(groundShadow(W * 1.6, DEP * 1.9, BASE - 0.02));
+    const glass = opt.glass !== false ? glassBox(W + 0.25, opt.glassH || 2.6, DEP + 0.25, BASE - 0.01, opt.glassOpacity ?? 0.22, opt.glassTint ?? 0.18) : null;
+    const shadow = opt.shadow !== false ? groundShadow(W * 1.6, DEP * 1.9, BASE - 0.02, 0.14) : null;
+    if (glass) group.add(glass);
+    if (shadow) group.add(shadow);
 
     // ---- Eisflächen ----
     const EXAG = opt.iceExag || 2.4;
@@ -332,6 +337,31 @@ window.Scene3D = (function () {
       });
     const touched = new Set(); gl.forEach((o) => o.verts.forEach((v) => touched.add(v[0])));
 
+    // blaue Eis-Umrisslinie (Marching Squares auf dem Eis-Feld)
+    let lastIce = new Map(), outline = null;
+    function drawIceOutline(ice) {
+      if (outline) { group.remove(outline); outline.geometry.dispose(); }
+      const out = [], lv = 0.35;
+      for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+        const k = [j * nx + i, j * nx + i + 1, (j + 1) * nx + i + 1, (j + 1) * nx + i];
+        const f = k.map((q) => ice.get(q) || 0);
+        if (f.every((v) => v < lv) || f.every((v) => v >= lv)) continue;
+        const pts = [];
+        for (let a = 0; a < 4; a++) {
+          const b = (a + 1) % 4;
+          if ((f[a] < lv) !== (f[b] < lv)) {
+            const t = (lv - f[a]) / (f[b] - f[a]);
+            pts.push(pos.getX(k[a]) + (pos.getX(k[b]) - pos.getX(k[a])) * t, pos.getY(k[a]) + (pos.getY(k[b]) - pos.getY(k[a])) * t + 0.01, pos.getZ(k[a]) + (pos.getZ(k[b]) - pos.getZ(k[a])) * t);
+          }
+        }
+        if (pts.length >= 6) out.push(...pts.slice(0, 6));
+        if (pts.length === 12) out.push(...pts.slice(6));
+      }
+      const g2 = new THREE.BufferGeometry(); g2.setAttribute("position", new THREE.Float32BufferAttribute(out, 3));
+      outline = new THREE.LineSegments(g2, new THREE.LineBasicMaterial({ color: C.blue }));
+      group.add(outline);
+    }
+
     function setYear(year) {
       const ice = new Map();
       gl.forEach((o) => {
@@ -344,6 +374,8 @@ window.Scene3D = (function () {
           if (f > (ice.get(k) || 0)) ice.set(k, f);
         });
       });
+      lastIce = ice;
+      if (opt.iceOutline) drawIceOutline(ice);
       touched.forEach((k) => {
         const f = ice.get(k) || 0;
         tmp.setRGB(base[k * 3], base[k * 3 + 1], base[k * 3 + 2]);
@@ -353,7 +385,7 @@ window.Scene3D = (function () {
       col.needsUpdate = true;
     }
 
-    return { group, setYear, glaciers: gl, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat };
+    return { group, setYear, glaciers: gl, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat, glass, shadow, EL, nx, ny, iceField: () => lastIce, eRange: () => { let a = 1e9, b = -1e9; EL.forEach((e) => { a = Math.min(a, e); b = Math.max(b, e); }); return [a, b]; } };
   }
 
   // ===================================================================

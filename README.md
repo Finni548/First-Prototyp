@@ -12,7 +12,7 @@ Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
 **Cube-Weg**
 1. **Übersicht (Skizze 1):** Karte links, Cube rechts (dreht sich), Text unten, Suche oben, Zeitleiste rechts (2026 oben).
 2. **Klick auf den Cube (1B):** Drehung stoppt, Cube wird gross, die Karte bleibt blass oben links. Jedes Jahr = eigene Eis-Ebene, die gemeinte leuchtet (Zeitleiste / Maus / Klick = festhalten). Zeitleiste läuft von selbst.
-3. **Klick auf einen Bohrkern-Zylinder:** derselbe Würfel nur für diesen Gletscher, vor dem Berg-Foto mit Cutout.
+3. **Klick auf einen Bohrkern-Zylinder:** das Gebiet dieses Gletschers als Explosionszeichnung (Referenz „Digitised Land“): Höhenkarte 1970 mit Raster, weisses Relief 1985, Höhenlinien 2000 und oben die Oberfläche im gewählten Jahr. Links Beschriftungen mit Leitlinien, rechts die Höhenkarten je Jahr.
 
 **Karten-Weg**
 1. **Klick auf die Karte:** Karte wird gross (drehen/zoomen), der Cube rückt blass in den Hintergrund. Feine Beschriftungen aller Gletscher.
@@ -22,6 +22,9 @@ Der erste, dunkle Prototyp liegt im Unterordner `Prototyp 1 (dunkel)`.
    - Die übrigen Bohrkerne sind Platzhalter; ihre Tabelle verweist auf die echten.
 
 Oben in jeder Ansicht: **↵** (einen Schritt zurück) und der Pfad, z. B. *Übersicht / Karte / Gornergletscher* – jeder Teil ist anklickbar.
+
+## Gestaltung
+Ruhige Ästhetik nach den Referenzen: eine Schrift (Montserrat), hellgrauer Hintergrund, feine schwarze Linien statt Kästen, nur Schwarz/Weiss/Grau und Blau (Blau = 2026 bzw. gewählt). Die Karte auf der Startseite ist eine 2D-Schummerung, der Cube dreht sich langsam.
 
 ## Bilder
 - Eiskern-Foto: wird online von Wikimedia Commons geladen (GISP2-Eiskern, National Ice Core Laboratory/USGS, gemeinfrei). Für offline: eigenes Foto als `img/eiskern.jpg` ablegen – es hat Vorrang.

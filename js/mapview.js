@@ -20,6 +20,13 @@ window.MapView = (function () {
     probe:    { theta: 0.35, phi: 0.88, radius: 23, target: [0, 0.5, 0], shift: 0 }
   };
 
+  // 2D-Ansicht von oben, so gross, dass die Karte das ganze Feld füllt
+  function flatCam() {
+    const t = Math.tan(stage.camera.fov / 2 * Math.PI / 180), aspect = stage.camera.aspect || 1.5;
+    const r = Math.min(dio.W / (2 * t * aspect), dio.DEP / (2 * t)) * 0.97 + 1.3;
+    return { theta: 0, phi: 0.0001, radius: r, target: [0, 0, 0] };
+  }
+
   // ---------- Bohrkerne eines Gletscher-Gebiets ----------
   // 3 schematische Punkte auf dem Gletscher + echte Bohrungen, falls sie im Gebiet liegen
   function coresFor(g) {
@@ -47,7 +54,7 @@ window.MapView = (function () {
       const mesh = Scene3D.makeCore(c.real ? 0.7 : 0.5, c.real ? 0.085 : 0.065);
       mesh.position.set(r.lonToX(c.lon), r.heightAt(c.lon, c.lat), r.latToZ(c.lat));
       mesh.userData.core = c.id;
-      if (c.real) mesh.children.forEach((m) => m.material && m.material.color && m.material.color.set && m.geometry.type !== "CylinderGeometry" && m.material.color.set("#d9643a"));
+      if (c.real) mesh.children.forEach((m) => m.material && m.material.color && m.material.color.set && m.geometry.type !== "CylinderGeometry" && m.material.color.set("#2a2f37"));
       r.group.add(mesh);
       return { c, mesh };
     });
@@ -82,9 +89,13 @@ window.MapView = (function () {
     if ((mode === "area" || mode === "probe") && areaId !== s.glacier) buildArea(App.glacierById(s.glacier));
     const showArea = mode === "area" || mode === "probe";
     dio.group.visible = !showArea;
+    // Übersicht (und blass hinter dem Cube): flache 2D-Karte ohne Glaskasten
+    const flat = !own;
+    if (dio.glass) dio.glass.visible = !flat;
+    if (dio.shadow) dio.shadow.visible = !flat;
     if (area) area.r.group.visible = showArea;
     stage.interactive = mode === "map" || mode === "area";
-    stage.flyTo(CAM[own ? mode : "overview"]);
+    if (own) stage.flyTo(CAM[mode]); else stage.flyTo({ ...flatCam(), shift: 0 });
     setLabels(mode);
     updateYear();
   }
@@ -105,8 +116,13 @@ window.MapView = (function () {
 
   function init() {
     stage = Scene3D.createStage(App.$("home-map-stage"), { fov: 28, ...CAM.overview });
+    stage.orbit.minPhi = 0.0001;
+    // ruhigeres Licht: die Karte soll wie eine Schummerung auf grauem Papier wirken
+    stage.scene.children.forEach((l) => { if (l.isLight) l.intensity *= 0.8; });
     dio = Scene3D.buildRelief({ glassH: 2.4 });
     stage.scene.add(dio.group);
+    if (dio.glass) dio.glass.visible = false;
+    if (dio.shadow) dio.shadow.visible = false;
 
     labels = Scene3D.createLabels(App.$("map-labels"), stage, {
       avoid: [".home-title h1", "#info-card", "#panel-cube"],
@@ -117,14 +133,13 @@ window.MapView = (function () {
     });
 
     const panel = App.$("panel-map");
-    panel.addEventListener("pointermove", (e) => { const r = panel.getBoundingClientRect(); tilt = (e.clientX - r.left) / r.width - 0.5; });
-    panel.addEventListener("pointerleave", () => (tilt = 0));
-    stage.onFrame = (dt) => {
-      if (App.state.mode === "overview" || App.state.mode === "cube" || App.state.mode === "probe") {
-        const o = stage.orbit, base = App.state.mode === "probe" ? CAM.probe.theta : CAM.overview.theta;
-        if (!stage.goal || stage.goal.theta == null) o.theta += ((base + tilt * 0.5) - o.theta) * Math.min(1, dt * 3);
+    stage.onFrame = () => {
+      const m = App.state.mode;
+      if (!["map", "area", "probe"].includes(m) && !stage.dragging) {
+        const c = flatCam();
+        stage.goal = { theta: c.theta, phi: c.phi, radius: c.radius, target: new THREE.Vector3(...c.target), shift: 0 };
       }
-      if (App.state.mode === "map" || App.state.mode === "area") labels.place(App.state.core);
+      if (m === "map" || m === "area") labels.place(App.state.core);
     };
     stage.renderer.domElement.addEventListener("pointerup", pick);
     panel.addEventListener("click", () => {

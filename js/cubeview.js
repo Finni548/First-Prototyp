@@ -13,7 +13,7 @@ window.CubeView = (function () {
   const D = GLACIER_DATA;
   let stage, ice, labels;          // ice = Würfel aller Gletscher
   let gcube = null, gId = null;    // gcube = Würfel eines Gletschers
-  let spin = 0.45, spinTarget = 0.45, opening = false;
+  let spin = 0.18, spinTarget = 0.18, opening = false;   // langsame Drehung
   let hoverYear = null;
   const pinned = new Set();
   const cores = [];                // { mesh, g, peak } im grossen Würfel
@@ -23,12 +23,12 @@ window.CubeView = (function () {
   const CAM = {
     overview: { theta: 0.6, phi: 1.12, radius: 17, target: [0, 1.9, 0], shift: 0 },
     cube:     { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0 },
-    glacier:  { theta: 0.55, phi: 1.12, radius: 17.5, target: [0, 1.8, 0], shift: -0.01 }
+    glacier:  { theta: 0.78, phi: 1.12, radius: 46, target: [0, 2.1, 0], shift: 0.03 }
   };
 
   // im Hintergrund / klein dreht sich der Würfel weiter
   const spinning = () => ["overview", "map", "area"].includes(App.state.mode);
-  const big = () => App.state.mode === "cube" || App.state.mode === "glacier";
+  const big = () => App.state.mode === "cube";
   // aktiver Würfel + wie seine Werte beschrieben werden
   const cur = () => (App.state.mode === "glacier" && gcube ? gcube : ice);
   const curG = () => App.glacierById(App.state.glacier);
@@ -89,7 +89,7 @@ window.CubeView = (function () {
         pos: () => ice.group.localToWorld(ice.surfaceAt(c.peak).add(v.set(0, 0.42 * coreScale(c.g), 0))).clone(),
         val: () => App.fmt(D.area(c.g, App.state.year)) + " km²"
       })));
-    } else if (App.state.mode === "glacier" && gcube) {
+    } else if (false) {   // (Gletscher-Ansicht hat eigene Beschriftung in glacierview.js)
       labels.set(gcores.map((c) => ({
         id: "core" + c.n, name: "Bohrkern " + c.n, rank: 10 - c.n,
         pos: () => gcube.group.localToWorld(gcube.surfaceAt(c.peak).add(v.set(0, 0.5 * Math.max(0.12, gcube.frac(App.state.year)), 0))).clone(),
@@ -156,15 +156,19 @@ window.CubeView = (function () {
   function setMode(mode) {
     if (mode !== lastMode) { pinned.clear(); hoverYear = null; }
     lastMode = mode;
-    const showG = mode === "glacier" || mode === "area";      // Würfel eines Gletschers
+    const showG = mode === "area";                            // kleiner Würfel eines Gletschers
     if (showG) { const g = curG(); if (gId !== g.id) buildGlacierCube(g); }
-    if (mode === "glacier") GlacierView.show(curG()); else GlacierView.hide();
-    ice.group.visible = !showG;
+    if (mode === "glacier") GlacierView.show(curG(), stage); else GlacierView.hide();
+    ice.group.visible = mode !== "glacier" && !showG;
+    // Explosionszeichnung: fast parallele Projektion (kleiner Blickwinkel)
+    stage.camera.fov = mode === "glacier" ? 13 : 30; stage.applyShift();
+    stage.orbit.maxR = mode === "glacier" ? 70 : 30;
     if (gcube) gcube.group.visible = showG;
     cores.forEach((c) => (c.mesh.visible = mode === "cube"));
     stage.active = mode !== "probe";
-    if (spinning()) spinTarget = 0.45;
+    if (spinning()) spinTarget = 0.18;
     stage.interactive = mode === "cube" || mode === "glacier";
+    if (mode === "glacier") labels.clear();
     stage.flyTo(CAM[CAM[mode] ? mode : "overview"]);
     if (spinning()) stage.goal.theta = null;
     updateYear();
@@ -233,6 +237,7 @@ window.CubeView = (function () {
         gcores.forEach((c) => { c.mesh.position.copy(gcube.surfaceAt(c.peak)); c.mesh.scale.y = s; });
       }
       if (big()) { labels.place(); placeYears(); }
+      if (App.state.mode === "glacier") GlacierView.place();
     };
     const el = stage.renderer.domElement;
     el.addEventListener("pointermove", onMove);

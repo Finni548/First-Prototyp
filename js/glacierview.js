@@ -1,175 +1,182 @@
 /* =========================================================================
-   Gletscher-Ansicht – Bühne hinter dem Gletscher-Würfel (Cutout-Look)
-   Das Fenster ist wie aus dem Foto HERAUSGESCHNITTEN:
-   1. Berg-Foto (img/berg-cutout)
-   2. Loch  : wo das Stück fehlt – vertiefte Fläche mit Schatten an den Schnittkanten
-   3. Stück : das herausgelöste Bildstück, leicht nach vorne versetzt,
-              mit sichtbarer Dicke, Schatten in Bergform, heller Schnittkante
-              und – wie in der Referenz – Pixel-Streifen & Partikeln am Rand
-   4. Rahmen + Raster darüber, davor der Würfel (cubeview.js)
-   Werte: Fläche = Näherung, Eis-Anteil = (Fläche/1970)^1.36 → modelliert
+   Gletscher-Ansicht – Ebenen als Explosionszeichnung (Referenz "Digitised Land")
+   Vier schwebende Ebenen desselben Gebiets, von unten nach oben:
+     1970  Höhenkarte in Graustufen mit Raster (Eis blau)
+     1985  weisses Relief (nur Form, Eis hellblau)
+     2000  nur Höhenlinien, Eisrand als blaue Linie
+     Jahr  Oberfläche mit Fels & Eis – folgt der Zeitleiste
+   Links: Beschriftung mit feiner Leitlinie · rechts: Höhenkarten je Jahr
+   Werte: Gletscherflächen sind Näherungen; Eis-Volumen modelliert.
    ========================================================================= */
 window.GlacierView = (function () {
   const D = GLACIER_DATA;
-  let root, g = null, img, holeCv, slabCv, frame, ready = false;
-  const LIFT = { x: -42, y: -30 };   // so weit ist das Stück nach vorne/oben gezogen
-  const DEPTH = 16;                  // Dicke des Stücks in px
+  let stage = null, root, g = null, built = null, hover = null;
+  const GAP = 1.55;
+  const v3 = new THREE.Vector3();
 
-  // ---------- Datentabelle ----------
-  function table() {
-    if (!g) return;
-    const yr = App.state.year, a = D.area(g, yr), a0 = D.area(g, D.FIRST);
-    const frac = Math.pow(Math.max(0, a / a0), 1.36);
-    const rows = [
-      ["Gletscher", g.name], ["Kanton", g.canton], ["Jahr", yr],
-      ["Fläche 1970", App.fmt(a0) + " km²"],
-      ["Fläche " + yr, a > 0 ? App.fmt(a) + " km²" : "verschwunden"],
-      ["Verlust seit 1970", App.signed(a - a0) + " km²"],
-      ["Eis-Volumen*", App.fmt(frac * 100, 0) + " % von 1970"],
-      ["Ebenen", (yr - D.FIRST + 1) + " Jahre"],
-      ["Bohrkerne", "3 Platzhalter"]
+  function boxFor(g) { return { lon0: g.lon - 0.14, lon1: g.lon + 0.14, lat0: g.lat - 0.095, lat1: g.lat + 0.095 }; }
+
+  // Höhenkarte als Bild (Graustufen + Eis in Blau + Raster)
+  function heightmapCanvas(r, year, size = 256, grid = true) {
+    const cv = document.createElement("canvas"); cv.width = cv.height = size;
+    const ctx = cv.getContext("2d"), img = ctx.createImageData(size, size);
+    const [lo, hi] = r.eRange();
+    r.setYear(year);
+    const ice = r.iceField();
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const i = Math.min(r.nx - 1, Math.round(x / (size - 1) * (r.nx - 1)));
+      const j = Math.min(r.ny - 1, Math.round(y / (size - 1) * (r.ny - 1)));
+      const k = j * r.nx + i, t = (r.EL[k] - lo) / (hi - lo);
+      let c = [20 + 225 * t, 20 + 225 * t, 22 + 225 * t];
+      const f = Math.min(1, (ice.get(k) || 0) * 1.6);
+      if (f > 0) c = c.map((v, n) => v * (1 - f * 0.75) + [125, 175, 230][n] * f * 0.75);
+      const p = (y * size + x) * 4; img.data[p] = c[0]; img.data[p + 1] = c[1]; img.data[p + 2] = c[2]; img.data[p + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    if (grid) {
+      ctx.strokeStyle = "rgba(20,24,30,.55)"; ctx.lineWidth = 1;
+      for (let n = 1; n < 8; n++) { const q = Math.round(n * size / 8) + 0.5; ctx.beginPath(); ctx.moveTo(q, 0); ctx.lineTo(q, size); ctx.moveTo(0, q); ctx.lineTo(size, q); ctx.stroke(); }
+    }
+    return cv;
+  }
+
+  function build(glacier) {
+    if (built) { stage.scene.remove(built.group); built = null; }
+    g = glacier;
+    const box = boxFor(g);
+    let minE = 1e9;
+    for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++)
+      minE = Math.min(minE, Scene3D.elevAt(box.lon0 + (box.lon1 - box.lon0) * i / 10, box.lat0 + (box.lat1 - box.lat0) * j / 10));
+    const common = { ...box, nx: 110, width: 5.2, vscale: 1.5, floor: minE - 100, base: -0.04, glass: false, shadow: false,
+                     border: false, iceExag: 1.4, outsideFade: false, glacierMargin: 0, iceAlt: [1900, 2800], iceAltFloor: 0 };
+    const group = new THREE.Group();
+
+    // 1970 – Höhenkarte als flache Ebene
+    const ref = Scene3D.buildRelief({ ...common });             // nur als Datenquelle
+    const flatTex = new THREE.CanvasTexture(heightmapCanvas(ref, 1970, 512));
+    flatTex.colorSpace = THREE.SRGBColorSpace;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(ref.W, ref.DEP), new THREE.MeshBasicMaterial({ map: flatTex }));
+    plane.rotation.x = -Math.PI / 2;
+    const L0 = new THREE.Group(); L0.add(plane);
+
+    // 1985 – weisses Relief
+    const white = Scene3D.buildRelief({ ...common, mono: "#f3f4f5" });
+    white.setYear(1985);
+    // 2000 – nur Höhenlinien + Eisrand
+    const lines = Scene3D.buildRelief({ ...common, contoursOnly: true, contours: 100, iceOutline: true });
+    lines.setYear(2000);
+    // gewähltes Jahr – Oberfläche
+    const top = Scene3D.buildRelief({ ...common });
+    top.setYear(App.state.year);
+
+    const layers = [
+      { key: "l0", obj: L0, y: 0, year: 1970, title: "Höhenkarte", sub: "Graustufen, Eis blau" },
+      { key: "l1", obj: white.group, y: GAP, year: 1985, title: "Relief", sub: "nur die Form" },
+      { key: "l2", obj: lines.group, y: GAP * 2, year: 2000, title: "Höhenlinien", sub: "alle 100 m, Eisrand blau" },
+      { key: "l3", obj: top.group, y: GAP * 3, year: null, title: "Oberfläche", sub: "Fels und Eis" }
     ];
-    App.$("gv-table").innerHTML =
-      `<dl class="rows">${rows.map(([k, v], i) => `<div class="${i === 2 ? "now" : i === 6 ? "key" : ""}"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>` +
-      (g.goneText ? `<p class="footnote">${g.goneText}.</p>` : "") +
-      `<div class="legend">
-         <div><i></i>Eis-Ebene eines Jahres</div>
-         <div><i class="l-hot"></i>Heisser Sommer</div>
-         <div><i class="l-lit"></i>Gewählt oder festgehalten</div>
-         <div><i class="l-core"></i>Bohrkern</div>
-       </div>
-       <p class="footnote">* Modelliert aus der Flächenänderung (Volumen ≈ Fläche<sup>1.36</sup>), keine Messwerte.</p>`;
+    layers.forEach((L) => { L.obj.position.y = L.y; group.add(L.obj); });
+
+    // feine senkrechte Rahmenlinien an den Ecken
+    const hw = ref.W / 2, hd = ref.DEP / 2;
+    const frame = [];
+    [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].forEach(([x, z]) => frame.push(x, 0, z, x, GAP * 3, z));
+    const fg = new THREE.BufferGeometry(); fg.setAttribute("position", new THREE.Float32BufferAttribute(frame, 3));
+    group.add(new THREE.LineSegments(fg, new THREE.LineBasicMaterial({ color: Scene3D.C.ink, transparent: true, opacity: 0.35 })));
+    // dünner Rahmen um jede Ebene
+    layers.forEach((L) => { if (L.key !== "l2") group.add(Object.assign(Scene3D.ringLine(hw, hd, L.y + 0.002, Scene3D.C.ink, 0.35), {})); });
+
+    stage.scene.add(group);
+    built = { group, layers, top, ref, hw, hd };
+    labelsHtml();
+    thumbs();
   }
 
-  // ---------- Cutout ----------
-  // kleiner Zufallsgenerator mit festem Startwert → Streifen sehen immer gleich aus
-  function rng(seed) { return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646; }
-
-  function buildCutout() {
-    if (!ready || root.hidden) return;
-    const R = root.getBoundingClientRect();
-    const ir = img.getBoundingClientRect(), wr = frame.getBoundingClientRect();
-    if (!ir.width || !wr.width) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const W = Math.round(wr.width), H = Math.round(wr.height);
-    const wx = wr.left - R.left, wy = wr.top - R.top;
-    // Ausschnitt des Fotos, der unter dem Fenster liegt (in Bildpixeln)
-    const sc = img.naturalWidth / ir.width;
-    const src = { x: (wr.left - ir.left) * sc, y: (wr.top - ir.top) * sc, w: W * sc, h: H * sc };
-
-    // Maske/Bild des Stücks in Fenstergrösse
-    const piece = document.createElement("canvas");
-    piece.width = W * dpr; piece.height = H * dpr;
-    const pc = piece.getContext("2d");
-    pc.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, piece.width, piece.height);
-
-    // ===== 1) Loch: vertiefte Fläche dort, wo Berg war =====
-    holeCv.width = W * dpr; holeCv.height = H * dpr;
-    Object.assign(holeCv.style, { left: wx + "px", top: wy + "px", width: W + "px", height: H + "px" });
-    const hc = holeCv.getContext("2d");
-    hc.clearRect(0, 0, holeCv.width, holeCv.height);
-    hc.drawImage(piece, 0, 0);
-    hc.globalCompositeOperation = "source-in";
-    const hg = hc.createLinearGradient(0, 0, holeCv.width * 0.6, holeCv.height);
-    hg.addColorStop(0, "#a9a395"); hg.addColorStop(0.4, "#cbc5b8"); hg.addColorStop(1, "#e2ddd2");
-    hc.fillStyle = hg; hc.fillRect(0, 0, holeCv.width, holeCv.height);
-    // Schatten an den Schnittkanten (oben & links tiefer, da Licht von oben links)
-    hc.globalCompositeOperation = "source-atop";
-    const edge = (x0, y0, x1, y1, a) => { const gr = hc.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(40,34,24,${a})`); gr.addColorStop(1, "rgba(40,34,24,0)"); return gr; };
-    const E = 26 * dpr;
-    hc.fillStyle = edge(0, 0, 0, E, 0.55); hc.fillRect(0, 0, holeCv.width, E);
-    hc.fillStyle = edge(0, 0, E, 0, 0.45); hc.fillRect(0, 0, E, holeCv.height);
-    hc.fillStyle = edge(0, holeCv.height, 0, holeCv.height - E * 0.5, 0.18); hc.fillRect(0, holeCv.height - E, holeCv.width, E);
-    hc.fillStyle = edge(holeCv.width, 0, holeCv.width - E * 0.5, 0, 0.18); hc.fillRect(holeCv.width - E, 0, E, holeCv.height);
-    // feine Felsstruktur im Loch (Abdruck des Bildes, sehr schwach)
-    hc.globalAlpha = 0.12; hc.globalCompositeOperation = "multiply"; hc.drawImage(piece, 0, 0); hc.globalAlpha = 1;
-    hc.globalCompositeOperation = "source-over";
-
-    // ===== 2) Stück: versetzt, mit Dicke, Schatten, Kante, Streifen =====
-    const M = 60; // Rand für Schatten/Streifen/Partikel
-    slabCv.width = (W + M * 2) * dpr; slabCv.height = (H + M * 2) * dpr;
-    Object.assign(slabCv.style, { left: (wx + LIFT.x - M) + "px", top: (wy + LIFT.y - M) + "px", width: (W + M * 2) + "px", height: (H + M * 2) + "px" });
-    const sc2 = slabCv.getContext("2d");
-    sc2.clearRect(0, 0, slabCv.width, slabCv.height);
-    const O = M * dpr;
-
-    // Silhouette (für Dicke & Schatten)
-    const sil = document.createElement("canvas"); sil.width = piece.width; sil.height = piece.height;
-    const sl = sil.getContext("2d"); sl.drawImage(piece, 0, 0); sl.globalCompositeOperation = "source-in";
-
-    // Schatten auf das Loch (in Bergform, weich)
-    sl.fillStyle = "rgba(30,26,20,1)"; sl.fillRect(0, 0, sil.width, sil.height);
-    sc2.save(); sc2.globalAlpha = 0.38; sc2.filter = `blur(${12 * dpr}px)`;
-    sc2.drawImage(sil, O - LIFT.x * dpr * 0.9, O - LIFT.y * dpr * 0.9); sc2.restore();
-
-    // Dicke: die Seitenwand des Stücks (von hinten nach vorne gestapelt)
-    for (let t = DEPTH; t >= 1; t--) {
-      const k = t / DEPTH;
-      sl.globalCompositeOperation = "source-in";
-      sl.fillStyle = `rgb(${Math.round(150 + 60 * (1 - k))},${Math.round(145 + 60 * (1 - k))},${Math.round(136 + 60 * (1 - k))})`;
-      sl.fillRect(0, 0, sil.width, sil.height);
-      sc2.drawImage(sil, O + t * dpr * 0.75, O + t * dpr * 0.6);
-    }
-
-    // das Bildstück selbst – etwas klarer/heller als der Berg dahinter
-    sc2.save(); sc2.filter = "contrast(1.08) brightness(1.04) saturate(1.05)";
-    sc2.drawImage(piece, O, O); sc2.restore();
-
-    // Glas-Glanz oben links
-    sc2.save(); sc2.globalCompositeOperation = "source-atop";
-    const gl = sc2.createLinearGradient(O, O, O + W * dpr * 0.7, O + H * dpr * 0.7);
-    gl.addColorStop(0, "rgba(255,255,255,.28)"); gl.addColorStop(0.35, "rgba(255,255,255,0)");
-    sc2.fillStyle = gl; sc2.fillRect(O, O, W * dpr, H * dpr); sc2.restore();
-
-    // helle Schnittkante entlang des Rechtecks (nur wo Berg ist)
-    sc2.save(); sc2.globalCompositeOperation = "source-atop";
-    sc2.strokeStyle = "rgba(255,255,255,.95)"; sc2.lineWidth = 2 * dpr;
-    sc2.strokeRect(O + dpr, O + dpr, W * dpr - 2 * dpr, H * dpr - 2 * dpr);
-    sc2.restore();
-
-    // ===== 3) Pixel-Streifen & Partikel (wie bei der Kristall-Referenz) =====
-    const rnd = rng(1234 + g.id.length * 97);
-    const data = pc.getImageData(0, 0, piece.width, piece.height).data;
-    const px = (x, y) => { const i = (Math.round(y) * piece.width + Math.round(x)) * 4; return [data[i], data[i + 1], data[i + 2], data[i + 3]]; };
-    // Streifen: an der rechten Fensterkante werden Bildzeilen nach rechts "verschmiert"
-    const xEdge = piece.width - 2;
-    for (let y = 0; y < piece.height; y += Math.max(1, Math.round(dpr))) {
-      const c = px(xEdge - 3 * dpr, y);
-      if (c[3] < 80 || rnd() < 0.72) continue;
-      const len = (12 + rnd() * 70) * dpr * (rnd() < 0.12 ? 2 : 1);
-      const hue = rnd();
-      const tint = hue < 0.12 ? [255, 90, 60] : hue < 0.24 ? [80, 130, 255] : null; // vereinzelt Spektralfarben
-      const col = tint ? tint : [c[0], c[1], c[2]];
-      const gr = sc2.createLinearGradient(O + xEdge, 0, O + xEdge + len, 0);
-      gr.addColorStop(0, `rgba(${col.join(",")},${tint ? 0.75 : 0.85})`); gr.addColorStop(1, `rgba(${col.join(",")},0)`);
-      sc2.fillStyle = gr; sc2.fillRect(O + xEdge, O + y, len, Math.max(1, dpr * (rnd() < 0.2 ? 2 : 1)));
-    }
-    // Partikel: von der oberen Kante des Stücks lösen sich Bildpunkte nach oben
-    for (let n = 0; n < 900; n++) {
-      const x = rnd() * piece.width, y0 = rnd() * piece.height * 0.5;
-      const c = px(x, y0);
-      if (c[3] < 120) continue;
-      const rise = Math.pow(rnd(), 2.2) * (O + y0 * 0.6);
-      const s = (0.8 + rnd() * 1.8) * dpr;
-      sc2.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${0.25 + rnd() * 0.6})`;
-      sc2.fillRect(O + x + (rnd() - 0.5) * 6 * dpr, O + y0 - rise, s, s);
-    }
+  // ---------- Beschriftungen links + Leitlinien ----------
+  function yearOf(L) { return L.year ?? App.state.year; }
+  function labelsHtml() {
+    const wrap = App.$("ex-labels");
+    wrap.innerHTML = built.layers.map((L) => `<div class="ex-label" data-key="${L.key}"><b>${yearOf(L)} ${L.title}</b>${L.sub}</div>`).join("");
+    wrap.querySelectorAll(".ex-label").forEach((el) => {
+      el.addEventListener("mouseenter", () => { hover = el.dataset.key; mark(); });
+      el.addEventListener("mouseleave", () => { hover = null; mark(); });
+      el.addEventListener("click", () => { const L = built.layers.find((x) => x.key === el.dataset.key); if (L.year) { Timeline.stop(); App.setYear(L.year); } });
+    });
+    mark();
+  }
+  function activeKey() {
+    const y = App.state.year;
+    // aktiv: die Ebene, deren Jahr dem gewählten entspricht – sonst die Oberfläche (folgt immer dem Jahr)
+    const L = built.layers.find((x) => x.year === y);
+    return L ? L.key : "l3";
+  }
+  function mark() {
+    const a = activeKey();
+    document.querySelectorAll("#ex-labels .ex-label").forEach((el) => el.classList.toggle("on", el.dataset.key === a || el.dataset.key === hover));
+    document.querySelectorAll("#ex-side .ex-thumb").forEach((el) => el.classList.toggle("on", el.dataset.key === a || el.dataset.key === hover));
   }
 
-  function show(glacier) {
-    g = glacier; root.hidden = false; table();
-    requestAnimationFrame(() => requestAnimationFrame(buildCutout));
+  function place() {
+    if (!built || root.hidden) return;
+    const w = stage.container.clientWidth, h = stage.container.clientHeight;
+    const svg = App.$("ex-lines");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    let d = "";
+    const left = w * 0.06;
+    const a = activeKey();
+    const paths = [];
+    built.layers.forEach((L) => {
+      // linkeste Ecke der Ebene auf dem Bildschirm
+      let best = null;
+      [[-built.hw, -built.hd], [built.hw, -built.hd], [built.hw, built.hd], [-built.hw, built.hd]].forEach(([x, z]) => {
+        v3.set(x, L.y, z); built.group.localToWorld(v3); v3.project(stage.camera);
+        const sx = (v3.x * 0.5 + 0.5) * w, sy = (-v3.y * 0.5 + 0.5) * h;
+        if (!best || sx < best.x) best = { x: sx, y: sy };
+      });
+      const el = document.querySelector(`#ex-labels .ex-label[data-key="${L.key}"]`);
+      if (!el) return;
+      const ly = best.y - 30;
+      el.style.transform = `translate(${left.toFixed(1)}px, ${(ly - 6).toFixed(1)}px)`;
+      const x0 = left + 170 / 2 - 40, xl = left + 170 / 2 + 40;
+      paths.push(`<path class="${L.key === a || L.key === hover ? "on" : ""}" d="M${x0},${ly + 30} H${best.x - 4} V${best.y} M${x0},${ly + 26} V${ly + 34}"/>`);
+    });
+    svg.innerHTML = paths.join("");
   }
-  function hide() { root.hidden = true; }
+
+  // ---------- Höhenkarten rechts ----------
+  function thumbs() {
+    const side = App.$("ex-side");
+    const yr = App.state.year;
+    const list = [[1970, "l0"], [1985, "l1"], [2000, "l2"], [yr, "l3"]];
+    side.innerHTML = "";
+    list.forEach(([y, key]) => {
+      const f = document.createElement("figure"); f.className = "ex-thumb"; f.dataset.key = key;
+      f.appendChild(heightmapCanvas(built.ref, y, 128, false));
+      const c = document.createElement("figcaption"); c.textContent = `${y}, ${App.fmt(D.area(g, y))} km²`; f.appendChild(c);
+      side.appendChild(f);
+    });
+    const a = D.area(g, yr), a0 = D.area(g, D.FIRST);
+    const p = document.createElement("p"); p.className = "ex-note";
+    p.textContent = a > 0 ? `${App.signed(a - a0)} km² seit 1970. Flächen sind Näherungen.` : `${g.goneText}.`;
+    side.appendChild(p);
+    mark();
+  }
+
+  function show(glacier, st) {
+    stage = st; root.hidden = false;
+    if (!built || g.id !== glacier.id) build(glacier);
+    built.group.visible = true;
+  }
+  function hide() { root.hidden = true; if (built) built.group.visible = false; }
+  function onYear() {
+    if (!built || root.hidden) return;
+    built.top.setYear(App.state.year);
+    labelsHtml(); thumbs();
+  }
 
   function init() {
-    root = App.$("gview"); holeCv = App.$("gv-hole"); slabCv = App.$("gv-slab"); frame = App.$("gv-window");
-    img = App.$("gv-mountain");
-    img.onload = () => { ready = true; buildCutout(); };
-    img.src = window.BERG_CUTOUT || "img/berg-cutout.png";
-    let t = 0;
-    new ResizeObserver(() => { clearTimeout(t); t = setTimeout(buildCutout, 120); }).observe(root);
-    App.onChange((s, what) => { if (what !== "route" && !root.hidden) table(); });
+    root = App.$("gview");
+    App.onChange((s, what) => { if (what !== "route") onYear(); });
   }
-  return { init, show, hide };
+  return { init, show, hide, place, isOn: () => !!built && !root.hidden };
 })();
