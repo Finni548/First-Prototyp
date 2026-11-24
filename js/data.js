@@ -31,20 +31,20 @@ window.GLACIER_DATA = (function () {
 
   // Hitzesommer / Rekord-Schmelzjahre – erscheinen orange in der Timeline
   const hotSummers = {
-    2003: "Jahrhundertsommer, bis dahin grösster Eisverlust",
-    2015: "Hitzewellen im Juli",
-    2018: "Trockener Hitzesommer",
-    2019: "Hitzewellen im Juni und Juli, der Pizolgletscher wird verabschiedet",
-    2022: "Rekordjahr mit über 6 % Eisverlust in einem Sommer",
-    2023: "Zweitgrösster Verlust, 2022 und 2023 zusammen −10 %",
-    2026: "−5.5 % in einem Sommer: nur 2022 war schlimmer"
+    2003: "Summer of the century, the biggest ice loss up to then",
+    2015: "Heatwaves in July",
+    2018: "Dry, hot summer",
+    2019: "Heatwaves in June and July; a farewell ceremony for the Pizol glacier",
+    2022: "Record year: over 6% of the ice lost in one summer",
+    2023: "Second-largest loss; 2022 and 2023 together −10%",
+    2026: "−5.5% in one summer: only 2022 was worse"
   };
 
   // Ereignisse, die zusätzlich auf der Timeline / Karte erscheinen
   const events = [
-    { year: 1985, label: "Ende der Vorstossphase. Ab hier schrumpfen fast alle Gletscher." },
-    { year: 2019, label: "Der Pizolgletscher (SG) verschwindet.", glacier: "pizol" },
-    { year: 2025, label: "Der Birchgletscher (VS) kollabiert und verschüttet Blatten.", glacier: "birch" }
+    { year: 1985, label: "End of the advance phase. From here on almost every glacier shrinks." },
+    { year: 2019, label: "The Pizol glacier (SG) disappears.", glacier: "pizol" },
+    { year: 2025, label: "The Birch glacier (VS) collapses and buries the village of Blatten.", glacier: "birch" }
   ];
 
   // Ausgewählte Gletscher: Fläche in km² (Näherung SGI 1973 → 2016)
@@ -70,23 +70,23 @@ window.GLACIER_DATA = (function () {
     { id: "tsanfleuron",name: "Glacier de Tsanfleuron",   canton: "VS", lon: 7.23, lat: 46.32, a1973: 3.8,  a2016: 2.5 },
     { id: "silvretta",  name: "Silvrettagletscher",       canton: "GR", lon: 10.08, lat: 46.85, a1973: 3.2, a2016: 2.6 },
     { id: "basodino",   name: "Ghiacciaio del Basòdino",  canton: "TI", lon: 8.47, lat: 46.42, a1973: 2.3,  a2016: 1.6 },
-    { id: "birch",      name: "Birchgletscher",           canton: "VS", lon: 7.84, lat: 46.40, a1973: 0.6,  a2016: 0.45, goneYear: 2025, goneText: "Kollaps am 28. Mai 2025" },
-    { id: "pizol",      name: "Pizolgletscher",           canton: "SG", lon: 9.39, lat: 46.96, a1973: 0.3,  a2016: 0.1,  goneYear: 2019, goneText: "2019 offiziell verabschiedet" }
+    { id: "birch",      name: "Birchgletscher",           canton: "VS", lon: 7.84, lat: 46.40, a1973: 0.6,  a2016: 0.45, goneYear: 2025, goneText: "Collapsed on 28 May 2025" },
+    { id: "pizol",      name: "Pizolgletscher",           canton: "SG", lon: 9.39, lat: 46.96, a1973: 0.3,  a2016: 0.1,  goneYear: 2019, goneText: "Officially declared gone in 2019" }
   ];
 
   // ECHTE Eiskern-Bohrungen in der Schweiz (Quellen siehe Links)
   const realCores = [
     {
       id: "cg", name: "Colle Gnifetti", lon: 7.876, lat: 45.929,
-      where: "Monte Rosa, Sattel des Grenzgletschers (Gornergletscher-System), VS",
-      elev: "ca. 4450–4500 m ü. M.",
+      where: "Monte Rosa, saddle of the Grenzgletscher (Gorner glacier system), VS",
+      elev: "approx. 4450–4500 m a.s.l.",
       drilled: "2021 (Ice Memory)", length: 82, toBedrock: true,
-      span: "bis ca. 10 000 Jahre", institutes: "PSI · CNR · Univ. Ca' Foscari Venedig",
+      span: "up to approx. 10,000 years", institutes: "PSI · CNR · Univ. Ca' Foscari Venice",
       facts: [
-        ["Erste Bohrung hier", "1976"],
-        ["2013", "Kern ca. 73 m bis zum Fels"],
-        ["2021", "2 tiefe Kerne bis Fels in 82 m + 3 kurze (15–22 m)"],
-        ["Archiv", "ein Kern wird in der Antarktis eingelagert"]
+        ["First drilling here", "1976"],
+        ["2013", "Core approx. 73 m to bedrock"],
+        ["2021", "2 deep cores to bedrock at 82 m + 3 short ones (15–22 m)"],
+        ["Archive", "one core is stored in Antarctica"]
       ],
       sources: [
         ["PSI – Ice Memory Mission accomplished", "https://www.psi.ch/en/news/psi-stories/ice-memory-mission-accomplished"],
@@ -98,14 +98,14 @@ window.GLACIER_DATA = (function () {
     },
     {
       id: "fh", name: "Fiescherhorn", lon: 8.067, lat: 46.551,
-      where: "Fiescherhorn-Gletscher, Berner Oberland (46°33′ N, 8°04′ E)",
-      elev: "ca. 3900 m ü. M.",
-      drilled: "Dezember 2002 (PSI)", length: 150, toBedrock: false,
-      span: "ca. 1660–2002 (Basisalter 340 ± 30 Jahre)", institutes: "Paul Scherrer Institut · Univ. Bern",
+      where: "Fiescherhorn glacier, Bernese Oberland (46°33′ N, 8°04′ E)",
+      elev: "approx. 3900 m a.s.l.",
+      drilled: "December 2002 (PSI)", length: 150, toBedrock: false,
+      span: "approx. 1660–2002 (base age 340 ± 30 years)", institutes: "Paul Scherrer Institute · Univ. of Bern",
       facts: [
-        ["Oberste 108 m", "≈ 1943–2002"],
-        ["Früherer Kern", "77 m (1989)"],
-        ["Datierung", "Jahresschichten gezählt + Atombomben-Marker 1956/1963"]
+        ["Top 108 m", "≈ 1943–2002"],
+        ["Earlier core", "77 m (1989)"],
+        ["Dating", "Annual layers counted + nuclear bomb markers 1956/1963"]
       ],
       sources: [
         ["HFSJG Activity Report 2003", "https://www.hfsjg.ch/reports/2003/pdf/23.pdf"],

@@ -399,12 +399,13 @@ body { letter-spacing: .01em; }
 .ex-lines path { fill: none; stroke: var(--ink-2); stroke-width: 1; }
 .ex-lines path.on { stroke: var(--blue); }
 .ex-labels { position: absolute; inset: 0; }
-.ex-label { position: absolute; left: 0; top: 0; width: 170px; text-align: center; font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.45; pointer-events: auto; cursor: pointer; will-change: transform; }
+.ex-label { position: absolute; left: 0; top: 0; width: 170px; text-align: left; font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.45; pointer-events: auto; cursor: pointer; will-change: transform; }
 .ex-label b { display: block; color: var(--ink); font-weight: 500; font-size: var(--fs-s); }
 .ex-label.on b, .ex-label.on { color: var(--blue); }
-.ex-side { position: absolute; right: 0; top: 0; width: 150px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+.ex-side { position: absolute; right: 0; top: 0; bottom: 0; width: 112px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
 .ex-thumb { margin: 0; }
-.ex-thumb canvas { display: block; width: 100%; aspect-ratio: 1.15; }
+.ex-thumb canvas { display: block; width: 100%; aspect-ratio: 1.35; opacity: .85; }
+.ex-thumb.on canvas { opacity: 1; outline: 1px solid var(--blue); outline-offset: 2px; }
 .ex-thumb figcaption { font-size: var(--fs-xs); color: var(--ink-2); text-align: center; margin-top: 4px; }
 .ex-thumb.on figcaption { color: var(--blue); }
 .ex-note { font-size: var(--fs-xs); color: var(--ink-2); text-align: center; line-height: 1.5; margin: 4px 0 0; }

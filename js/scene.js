@@ -385,7 +385,7 @@ window.Scene3D = (function () {
       col.needsUpdate = true;
     }
 
-    return { group, setYear, glaciers: gl, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat, glass, shadow, EL, nx, ny, iceField: () => lastIce, eRange: () => { let a = 1e9, b = -1e9; EL.forEach((e) => { a = Math.min(a, e); b = Math.max(b, e); }); return [a, b]; } };
+    return { group, setYear, glaciers: gl, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat, glass, shadow, EL, nx, ny, Y: (k) => pos.getY(k), X: (k) => pos.getX(k), Z: (k) => pos.getZ(k), iceField: () => lastIce, eRange: () => { let a = 1e9, b = -1e9; EL.forEach((e) => { a = Math.min(a, e); b = Math.max(b, e); }); return [a, b]; } };
   }
 
   // ===================================================================

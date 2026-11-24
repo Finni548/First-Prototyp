@@ -7,11 +7,11 @@
 window.Home = (function () {
   const ALL = ["overview", "cube", "glacier", "map", "area", "probe"];
   const BACK = { cube: "home", glacier: "cube", map: "home", area: "map", probe: "area" };
-  const ROTATOR = `Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span>`;
+  const ROTATOR = `Switzerland’s ice <span class="rotator" aria-live="polite"><span class="rot-word">is melting.</span></span>`;
   let page, lastMode = null;
 
   function rotator() {
-    const words = ["schmilzt.", "verschwindet.", "wird zu Wasser.", "verändert die Alpen."];
+    const words = ["is melting.", "is vanishing.", "turns to water.", "reshapes the Alps."];
     let i = 0;
     setInterval(() => {
       const el = document.querySelector(".rotator");
@@ -27,22 +27,22 @@ window.Home = (function () {
     const core = s.mode === "probe" && g ? MapView.coresFor(g).find((c) => c.id === s.core) : null;
     const C = (label, route) => ({ label, route });
     const t = {
-      overview: { title: null, lede: "", crumbs: [C("Übersicht")] },
-      cube: { title: `Alle Gletscher im Jahr ${s.year}`,
-        lede: "Jede Ebene ist ein Jahr. Fahre über eine Ebene, um sie hervorzuheben, ein Klick hält sie fest. Die Zylinder öffnen einzelne Gletscher.",
-        crumbs: [C("Übersicht", "home"), C("Alle Gletscher")] },
+      overview: { title: null, lede: "", crumbs: [C("Overview")] },
+      cube: { title: `All glaciers in ${s.year}`,
+        lede: "Each layer is one year. Hover a layer to highlight it, click to pin it. The cylinders open single glaciers.",
+        crumbs: [C("Overview", "home"), C("All glaciers")] },
       glacier: g && { title: g.name,
-        lede: "Das Gebiet in Ebenen zerlegt: Höhenkarte 1970, Relief 1985, Höhenlinien 2000 und oben die Oberfläche im gewählten Jahr.",
-        crumbs: [C("Übersicht", "home"), C("Alle Gletscher", "cube"), C(g.name)] },
-      map: { title: "Karte der Gletscher",
-        lede: "Wähle einen Gletscher, um sein Gebiet zu öffnen. Ziehen dreht die Karte, Scrollen zoomt.",
-        crumbs: [C("Übersicht", "home"), C("Karte")] },
+        lede: "The area taken apart year by year: each plate shows the terrain as lines, the ice in blue. The highlighted plate is the selected year.",
+        crumbs: [C("Overview", "home"), C("All glaciers", "cube"), C(g.name)] },
+      map: { title: "Glacier map",
+        lede: "Pick a glacier to open its area. Drag to rotate the map, scroll to zoom.",
+        crumbs: [C("Overview", "home"), C("Map")] },
       area: g && { title: g.name,
-        lede: "Höhenlinien alle 100 m. Die Zylinder sind Bohrstellen, orange markiert echte Bohrungen.",
-        crumbs: [C("Übersicht", "home"), C("Karte", "map"), C(g.name)] },
-      probe: g && core && { title: core.real ? `Kernbohrung ${core.name}` : `${core.name}, ${g.name}`,
-        lede: core.real ? `${core.where}, ${core.elev}` : `Schematische Bohrstelle auf dem ${g.name}, Kanton ${g.canton}.`,
-        crumbs: [C("Übersicht", "home"), C("Karte", "map"), C(g.name, "area/" + g.id), C(core.name)] }
+        lede: "Contour lines every 100 m. The cylinders are drill sites; blue marks real ice cores.",
+        crumbs: [C("Overview", "home"), C("Map", "map"), C(g.name)] },
+      probe: g && core && { title: core.real ? `Ice core ${core.name}` : `${core.name}, ${g.name}`,
+        lede: core.real ? `${core.where}, ${core.elev}` : `Schematic drill site on ${g.name}, canton ${g.canton}.`,
+        crumbs: [C("Overview", "home"), C("Map", "map"), C(g.name, "area/" + g.id), C(core.name)] }
     }[s.mode];
     if (!t) return;
     const title = App.$("view-title");
@@ -50,7 +50,7 @@ window.Home = (function () {
     else title.textContent = t.title;
     App.$("view-lede").textContent = t.lede;
     App.$("crumbs").innerHTML = t.crumbs.map((c) => c.route ? `<li><a href="#${c.route}" data-route="${c.route}">${c.label}</a></li>` : `<li aria-current="page">${c.label}</li>`).join("");
-    App.$("cube-tag").textContent = s.mode === "area" ? "Cube dieses Gletschers" : "Cube";
+    App.$("cube-tag").textContent = s.mode === "area" ? "Cube of this glacier" : "Cube";
   }
 
   function onRoute(s) {

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swiss Glaciers – Schweizer Gletscher 1970–2026</title>
+  <title>Swiss Glaciers 1970–2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -18,12 +18,12 @@
       Swiss<br>Glaciers
     </a>
     <nav class="main-nav" aria-label="Hauptnavigation">
-      <a href="#home" data-go="home">Übersicht</a>
-      <a href="#cube" data-go="cube">Alle Gletscher</a>
-      <a href="#map" data-go="map">Karte</a>
+      <a href="#home" data-go="home">Overview</a>
+      <a href="#cube" data-go="cube">All glaciers</a>
+      <a href="#map" data-go="map">Map</a>
     </nav>
     <form class="search" id="search" role="search" autocomplete="off">
-      <input id="search-input" list="glacier-list" placeholder="Gletscher suchen" aria-label="Gletscher suchen">
+      <input id="search-input" list="glacier-list" placeholder="Search glaciers" aria-label="Search glaciers">
       <datalist id="glacier-list"></datalist>
       <button type="submit" aria-label="Suchen">
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
@@ -36,26 +36,26 @@
 
       <!-- Kopf jeder Ansicht: Zurück + Pfad, Titel, ein Satz -->
       <div class="view-head">
-        <nav class="crumbs" aria-label="Pfad">
-          <button class="back-btn" id="back-btn" aria-label="Zurück">
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <button class="back-btn" id="back-btn" aria-label="Back">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v7a3 3 0 0 1-3 3H6 M10 11l-4 4 4 4"/></svg>
           </button>
           <ol id="crumbs"></ol>
         </nav>
-        <h1 id="view-title">Das Eis der Schweiz <span class="rotator" aria-live="polite"><span class="rot-word">schmilzt.</span></span></h1>
+        <h1 id="view-title">Switzerland’s ice <span class="rotator" aria-live="polite"><span class="rot-word">is melting.</span></span></h1>
         <p class="view-lede" id="view-lede"></p>
       </div>
 
       <!-- Karte -->
-      <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Karte öffnen">
+      <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Open map">
         <div class="panel-stage" id="home-map-stage"></div>
         <div class="label-layer" id="map-labels"></div>
-        <span class="panel-tag">Karte</span>
-        <span class="panel-open" aria-hidden="true">Karte öffnen</span>
+        <span class="panel-tag">Map</span>
+        <span class="panel-open" aria-hidden="true">Open map</span>
       </div>
 
       <!-- Cube -->
-      <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Cube öffnen">
+      <div class="panel panel-cube" id="panel-cube" role="button" tabindex="0" aria-label="Open cube">
         <div class="panel-stage" id="cube-stage"></div>
         <div class="label-layer" id="cube-labels"></div>
         <div class="year-layer" id="cube-years"><svg></svg></div>
@@ -67,54 +67,54 @@
           <aside class="ex-side" id="ex-side"></aside>
         </div>
         <span class="panel-tag" id="cube-tag">Cube</span>
-        <span class="panel-open" aria-hidden="true">Cube öffnen</span>
-        <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 Ebene festgehalten</span><button id="pin-clear" type="button">Auswahl löschen</button></div>
+        <span class="panel-open" aria-hidden="true">Open cube</span>
+        <div class="pin-bar" id="pin-bar" hidden><span id="pin-count">1 layer pinned</span><button id="pin-clear" type="button">Clear selection</button></div>
       </div>
 
       <!-- Text der Übersicht -->
       <div class="home-text card">
-        <p class="lead">Die Karte zeigt jeden Gletscher an seinem Ort. Der Cube fasst alles Eis zusammen: jedes Jahr ist eine eigene Ebene. Wähle einen der beiden Wege.</p>
+        <p class="lead">The map shows every glacier in its place. The cube gathers all the ice into one block, with one layer per year. Choose a way in.</p>
         <dl class="stats">
-          <div><dt>Eis seit 1970</dt><dd id="st-pct">−50 %</dd></div>
-          <div><dt>Übrig im Jahr <span class="yr">2026</span></dt><dd id="st-vol">42.6 km³</dd></div>
-          <div><dt>Verschwunden 1973–2016</dt><dd>1019 Gletscher</dd></div>
+          <div><dt>Ice since 1970</dt><dd id="st-pct">−50%</dd></div>
+          <div><dt>Left in <span class="yr">2026</span></dt><dd id="st-vol">42.6 km³</dd></div>
+          <div><dt>Vanished 1973–2016</dt><dd>1019 glaciers</dd></div>
         </dl>
       </div>
 
       <!-- Kernbohrung -->
-      <section class="probe" id="probe" hidden aria-label="Kernbohrung">
+      <section class="probe" id="probe" hidden aria-label="Ice core">
         <figure class="figure pr-photo">
-          <div class="figure-img"><img id="pr-photo" alt="Gletscher-Gebiet mit Bohrstelle"><span class="pr-marker" aria-hidden="true"><i></i></span></div>
-          <figcaption>Bohrstelle <b id="pr-site">–</b></figcaption>
+          <div class="figure-img"><img id="pr-photo" alt="Glacier area with drill site"><span class="pr-marker" aria-hidden="true"><i></i></span></div>
+          <figcaption>Drill site <b id="pr-site">–</b></figcaption>
         </figure>
         <div class="pr-core" id="pr-core">
-          <div class="pr-head"><span class="badge" id="pr-badge">Platzhalter</span><p class="pr-after" id="pr-after"></p></div>
+          <div class="pr-head"><span class="badge" id="pr-badge">Placeholder</span><p class="pr-after" id="pr-after"></p></div>
           <svg id="pr-svg"></svg>
           <p class="footnote" id="pr-note"></p>
         </div>
         <aside class="pr-side">
           <figure class="figure pr-ice">
             <div class="figure-img">
-              <img id="pr-icecore" alt="Echter Eiskern mit sichtbaren Jahresschichten" hidden>
-              <div class="pr-ice-ph" id="pr-icecore-ph" hidden><span>Das Foto lädt aus dem Internet.<br>Offline: <code>img/eiskern.jpg</code> ablegen.</span></div>
+              <img id="pr-icecore" alt="Real ice core with visible annual layers" hidden>
+              <div class="pr-ice-ph" id="pr-icecore-ph" hidden><span>The photo loads from the internet.<br>Offline: add <code>img/eiskern.jpg</code>.</span></div>
             </div>
-            <figcaption>Eiskern mit Jahresschichten (GISP2, 1837 m Tiefe). Foto: National Ice Core Laboratory, USGS, gemeinfrei.</figcaption>
+            <figcaption>Ice core with annual layers (GISP2, 1837 m deep). Photo: National Ice Core Laboratory, USGS, public domain.</figcaption>
           </figure>
-          <button class="switch" id="pr-toggle" aria-pressed="false"><span class="sw"><i></i></span>Messdaten anzeigen</button>
+          <button class="switch" id="pr-toggle" aria-pressed="false"><span class="sw"><i></i></span>Show measured data</button>
           <div class="pr-table-wrap" id="pr-table-wrap"><div id="pr-table"></div></div>
         </aside>
       </section>
     </section>
 
     <!-- Zahlen -->
-    <aside class="info-card card" id="info-card" aria-label="Zahlen zum gewählten Jahr">
-      <p class="ic-title" id="info-kicker">Gletschereis der Schweiz, 2026</p>
+    <aside class="info-card card" id="info-card" aria-label="Figures for the selected year">
+      <p class="ic-title" id="info-kicker">Swiss glacier ice, 2026</p>
       <div class="hero-num"><span id="hero-vol">42.6</span> <small id="hero-unit">km³</small></div>
       <div class="bar" aria-hidden="true"><span id="hero-bar"></span></div>
-      <p class="sub" id="hero-sub">50 % des Eises von 1970</p>
+      <p class="sub" id="hero-sub">50% of the 1970 ice</p>
       <dl class="rows">
-        <div><dt>Seit 1970</dt><dd id="loss-total">−42.4 km³</dd></div>
-        <div><dt>In diesem Jahr</dt><dd id="loss-year">−2.5 km³</dd></div>
+        <div><dt>Since 1970</dt><dd id="loss-total">−42.4 km³</dd></div>
+        <div><dt>This year</dt><dd id="loss-year">−2.5 km³</dd></div>
       </dl>
       <p class="note" id="year-note"></p>
     </aside>
@@ -123,12 +123,12 @@
   </main>
 
   <!-- ================= Zeitleiste rechts ================= -->
-  <aside class="timeline" aria-label="Zeitleiste 1970 bis 2026">
+  <aside class="timeline" aria-label="Timeline 1970 to 2026">
     <div class="tl-big" id="tl-big">2026</div>
-    <button class="play" id="play-btn" aria-label="Abspielen">
+    <button class="play" id="play-btn" aria-label="Play">
       <svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4l10 6-10 6z"/><path class="i-pause" d="M5 4h3v12H5zM12 4h3v12h-3z"/></svg>
     </button>
-    <div class="tl-track" id="tl-track" role="slider" tabindex="0" aria-valuemin="1970" aria-valuemax="2026" aria-valuenow="2026" aria-label="Jahr wählen">
+    <div class="tl-track" id="tl-track" role="slider" tabindex="0" aria-valuemin="1970" aria-valuemax="2026" aria-valuenow="2026" aria-label="Select year">
       <div class="tl-list" id="tl-list"></div>
     </div>
   </aside>

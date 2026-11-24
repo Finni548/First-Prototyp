@@ -19,7 +19,7 @@ window.Probe = (function () {
         length: core.length,
         depthOf: core.depthYear,                 // null → schematisch
         topYear: core.id === "fh" ? 2002 : 2021,
-        note: core.schematicLayers ? "Kernlänge und Bohrjahr sind echt. Die Lage der Jahresschichten ist schematisch, Tiefendaten fehlen noch." : "Tiefe der Jahre als lineare Näherung: die obersten 108 m entsprechen etwa 1943–2002."
+        note: core.schematicLayers ? "Core length and drilling year are real. The position of the annual layers is schematic; depth data is still missing." : "Depth per year as a linear approximation: the top 108 m cover roughly 1943–2002."
       };
     }
     // schematischer Kern: Länge = modellierte Eisdicke an dieser Stelle im gewählten Jahr
@@ -28,7 +28,7 @@ window.Probe = (function () {
     const L = Math.max(8, Math.round(72 * Math.sqrt(g.a1973) * off * frac));
     const top = App.state.year;
     return { length: L, depthOf: (y) => (y > top ? null : (top - y) / Math.max(1, top - D.FIRST) * L * 0.9), topYear: top,
-             note: "Schematischer Kern: Länge aus der modellierten Eisdicke, Schichten gleichmässig verteilt." };
+             note: "Schematic core: length from the modelled ice thickness, layers spaced evenly." };
   }
 
   function drawCore() {
@@ -84,9 +84,9 @@ window.Probe = (function () {
     });
     // Oberfläche
     el("ellipse", { class: "pr-top", cx, cy: y0, rx: rw, ry }, svg);
-    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y0 - 12 }, svg).textContent = core.real ? `Oberfläche, gebohrt ${m.topYear}` : `Oberfläche ${m.topYear}`;
-    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y1 + 4 }, svg).textContent = core.real ? (core.toBedrock ? `Fels, ${core.length} m` : `Kernende, ${core.length} m`) : `Fels, ca. ${m.length} m`;
-    App.$("pr-after").textContent = yr > m.topYear ? `${yr} liegt nach der Bohrung von ${m.topYear} und ist nicht im Kern.` : "";
+    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y0 - 12 }, svg).textContent = core.real ? `Surface, drilled ${m.topYear}` : `Surface ${m.topYear}`;
+    el("text", { class: "pr-yl dim", x: cx + rw + 34, y: y1 + 4 }, svg).textContent = core.real ? (core.toBedrock ? `Bedrock, ${core.length} m` : `End of core, ${core.length} m`) : `Bedrock, approx. ${m.length} m`;
+    App.$("pr-after").textContent = yr > m.topYear ? `${yr} is after the ${m.topYear} drilling and not in the core.` : "";
     App.$("pr-note").textContent = m.note;
   }
 
@@ -95,17 +95,17 @@ window.Probe = (function () {
     const rows = (list) => `<dl class="rows">${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
     if (core.real) {
       t.innerHTML = rows([
-        ["Ort", core.where], ["Höhe", core.elev], ["Bohrung", core.drilled],
-        ["Kernlänge", core.length + " m" + (core.toBedrock ? ", bis zum Fels" : "")],
-        ["Zeitraum im Eis", core.span], ["Institute", core.institutes.replace(/ · /g, ", ")],
+        ["Location", core.where], ["Elevation", core.elev], ["Drilled", core.drilled],
+        ["Core length", core.length + " m" + (core.toBedrock ? ", to bedrock" : "")],
+        ["Time span in the ice", core.span], ["Institutes", core.institutes.replace(/ · /g, ", ")],
         ...core.facts
-      ]) + `<p class="pr-src">Quellen: ${core.sources.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(", ")}</p>`;
+      ]) + `<p class="pr-src">Sources: ${core.sources.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(", ")}</p>`;
     } else {
       t.innerHTML = rows([
-        ["Bohrstelle", core.name], ["Gletscher", g.name],
-        ["Fläche " + App.state.year, App.fmt(D.area(g, App.state.year)) + " km² (Näherung)"],
-        ["Status", "Platzhalter, keine Messung"]
-      ]) + `<p class="footnote">Für diesen Punkt gibt es noch keine echten Bohrdaten. Echte Schweizer Eiskerne:</p>
+        ["Drill site", core.name], ["Glacier", g.name],
+        ["Area " + App.state.year, App.fmt(D.area(g, App.state.year)) + " km² (approx.)"],
+        ["Status", "Placeholder, no measurement"]
+      ]) + `<p class="footnote">There is no real drilling data for this point yet. Real Swiss ice cores:</p>
         <div class="pr-jumps">${D.realCores.map((c) => `<button class="pr-jump" data-core="${c.id}">${c.name}, ${c.drilled}</button>`).join("")}</div>`;
       t.querySelectorAll(".pr-jump").forEach((b) => b.addEventListener("click", () => {
         const c = D.realCores.find((x) => x.id === b.dataset.core);
@@ -131,7 +131,7 @@ window.Probe = (function () {
     g = glacier;
     core = MapView.coresFor(g).find((c) => c.id === coreId) || MapView.coresFor(g)[0];
     root.hidden = false;
-    App.$("pr-badge").textContent = core.real ? "Echte Bohrung" : "Platzhalter";
+    App.$("pr-badge").textContent = core.real ? "Real ice core" : "Placeholder";
     App.$("pr-badge").classList.toggle("real", !!core.real);
     photo(); table();
     requestAnimationFrame(drawCore);
@@ -143,7 +143,7 @@ window.Probe = (function () {
     App.$("pr-toggle").addEventListener("click", () => {
       const open = App.$("pr-table-wrap").classList.toggle("open");
       App.$("pr-toggle").setAttribute("aria-pressed", open);
-      App.$("pr-toggle").lastChild.textContent = open ? "Messdaten ausblenden" : "Messdaten anzeigen";
+      App.$("pr-toggle").lastChild.textContent = open ? "Hide measured data" : "Show measured data";
     });
     new ResizeObserver(() => drawCore()).observe(App.$("pr-core"));
     App.onChange((s, what) => {

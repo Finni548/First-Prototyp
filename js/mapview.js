@@ -32,7 +32,7 @@ window.MapView = (function () {
   function coresFor(g) {
     const box = boxFor(g), s = Math.max(0.6, Math.sqrt(g.a1973) / 9);
     const list = [[0, 0], [-0.03, 0.012], [0.028, -0.016]].map(([dl, db], i) => ({
-      id: "k" + (i + 1), name: "Bohrkern " + (i + 1), lon: g.lon + dl * s, lat: g.lat + db * s, real: false
+      id: "k" + (i + 1), name: "Ice core " + (i + 1), lon: g.lon + dl * s, lat: g.lat + db * s, real: false
     }));
     D.realCores.forEach((c) => {
       if (c.lon > box.lon0 && c.lon < box.lon1 && c.lat > box.lat0 && c.lat < box.lat1) list.push({ ...c, real: true });
@@ -77,7 +77,7 @@ window.MapView = (function () {
       labels.set(area.cores.map(({ c, mesh }) => ({
         id: c.id, name: c.name, rank: c.real ? 100 : 10,
         pos: () => area.r.group.localToWorld(v.copy(mesh.position).add(new THREE.Vector3(0, c.real ? 0.72 : 0.52, 0))).clone(),
-        val: () => c.real ? `Echte Bohrung, ${c.length} m` : "Platzhalter"
+        val: () => c.real ? `Real ice core, ${c.length} m` : "Placeholder"
       })));
     } else labels.clear();
   }

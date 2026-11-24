@@ -8,7 +8,7 @@ window.App = (function () {
   const state = { year: D.LAST, page: "home", mode: "overview", glacier: null, core: null };
   const listeners = [];
 
-  const fmt = (n, d = 1) => n.toLocaleString("de-CH", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmt = (n, d = 1) => n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
   const signed = (n, d = 1) => (n > 0 ? "+" : n < 0 ? "−" : "±") + fmt(Math.abs(n), d);
   const $ = (id) => document.getElementById(id);
   const glacierById = (id) => D.glaciers.find((g) => g.id === id);
@@ -61,32 +61,32 @@ window.App = (function () {
     const g = ["glacier", "area", "probe"].includes(state.mode) ? glacierById(state.glacier) : null;
     if (g) {
       const a = D.area(g, y), a0 = D.area(g, D.FIRST), prev = y > D.FIRST ? D.area(g, y - 1) : a;
-      $("info-kicker").textContent = `${g.name}, Fläche ${y}`;
+      $("info-kicker").textContent = `${g.name}, area ${y}`;
       $("hero-vol").textContent = a > 0 ? fmt(a) : "0";
       $("hero-unit").textContent = "km²";
       $("hero-bar").style.width = (a / a0 * 100) + "%";
-      $("hero-sub").textContent = a > 0 ? `Noch ${fmt(a / a0 * 100, 0)} % der Fläche von 1970 (Näherung).` : g.goneText + ".";
+      $("hero-sub").textContent = a > 0 ? `${fmt(a / a0 * 100, 0)}% of the 1970 area left (approximation).` : g.goneText + ".";
       $("loss-total").textContent = signed(a - a0) + " km²";
-      $("loss-year").textContent = y === D.FIRST ? "Startjahr" : signed(a - prev, 2) + " km²";
+      $("loss-year").textContent = y === D.FIRST ? "First year" : signed(a - prev, 2) + " km²";
     } else {
       const v = D.vol(y), pct = v / D.V0 * 100, lost = v - D.V0;
-      $("info-kicker").textContent = `Gletschereis der Schweiz, ${y}`;
+      $("info-kicker").textContent = `Swiss glacier ice, ${y}`;
       $("hero-vol").textContent = fmt(v);
       $("hero-unit").textContent = "km³";
       $("hero-bar").style.width = pct + "%";
       $("hero-sub").textContent = lost < -0.5
-        ? `Noch ${fmt(pct, 0)} % des Eises von 1970. Verloren ist so viel wie ${fmt(Math.abs(lost) / D.BIELERSEE, 0)} Bielerseen.`
-        : `Noch ${fmt(pct, 0)} % des Eises von 1970.`;
+        ? `${fmt(pct, 0)}% of the 1970 ice is left. The loss equals ${fmt(Math.abs(lost) / D.BIELERSEE, 0)} times the volume of Lake Biel.`
+        : `${fmt(pct, 0)}% of the 1970 ice is left.`;
       $("loss-total").textContent = signed(lost) + " km³";
-      $("loss-year").textContent = y === D.FIRST ? "Startjahr" : `${signed(D.change(y))} km³ (${signed(D.changePct(y))} %)`;
+      $("loss-year").textContent = y === D.FIRST ? "First year" : `${signed(D.change(y))} km³ (${signed(D.changePct(y))}%)`;
     }
     const hot = D.hotSummers[y], ev = D.events.find((e) => e.year === y);
     const note = $("year-note");
-    note.textContent = hot ? "Heisser Sommer: " + hot : ev ? ev.label : "";
+    note.textContent = hot ? "Hot summer: " + hot : ev ? ev.label : "";
     note.classList.toggle("hot", !!hot);
 
     const v = D.vol(y);
-    $("st-pct").textContent = signed(v / D.V0 * 100 - 100, 0) + " %";
+    $("st-pct").textContent = signed(v / D.V0 * 100 - 100, 0) + "%";
     $("st-vol").textContent = fmt(v) + " km³";
     document.querySelectorAll(".yr").forEach((e) => (e.textContent = y));
   }

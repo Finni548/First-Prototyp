@@ -52,7 +52,7 @@ window.Timeline = (function () {
   }
   function stop() {
     clearInterval(timer); timer = null;
-    playBtn.classList.remove("is-playing"); playBtn.setAttribute("aria-label", "Abspielen");
+    playBtn.classList.remove("is-playing"); playBtn.setAttribute("aria-label", "Play");
   }
   const isPlaying = () => !!timer;
 

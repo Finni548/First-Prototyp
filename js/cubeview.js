@@ -23,7 +23,7 @@ window.CubeView = (function () {
   const CAM = {
     overview: { theta: 0.6, phi: 1.12, radius: 17, target: [0, 1.9, 0], shift: 0 },
     cube:     { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0 },
-    glacier:  { theta: 0.78, phi: 1.12, radius: 46, target: [0, 2.1, 0], shift: 0.03 }
+    glacier:  { theta: 0.78, phi: 1.1, radius: 54, target: [0, 1.6, 0], shift: 0.02 }
   };
 
   // im Hintergrund / klein dreht sich der Würfel weiter
@@ -35,7 +35,7 @@ window.CubeView = (function () {
   function valueText(y) {
     if (App.state.mode === "glacier" && gcube) {
       const g = curG(), a = D.area(g, y);
-      return a > 0 ? `${App.fmt(a)} km², ${App.fmt(gcube.frac(y) * 100, 0)} % Eis` : "verschwunden";
+      return a > 0 ? `${App.fmt(a)} km², ${App.fmt(gcube.frac(y) * 100, 0)} % ice` : "vanished";
     }
     return `${App.fmt(D.vol(y))} km³, ${App.fmt(D.vol(y) / D.V0 * 100, 0)} %`;
   }
@@ -91,9 +91,9 @@ window.CubeView = (function () {
       })));
     } else if (false) {   // (Gletscher-Ansicht hat eigene Beschriftung in glacierview.js)
       labels.set(gcores.map((c) => ({
-        id: "core" + c.n, name: "Bohrkern " + c.n, rank: 10 - c.n,
+        id: "core" + c.n, name: "Ice core " + c.n, rank: 10 - c.n,
         pos: () => gcube.group.localToWorld(gcube.surfaceAt(c.peak).add(v.set(0, 0.5 * Math.max(0.12, gcube.frac(App.state.year)), 0))).clone(),
-        val: () => `${App.fmt(gcube.frac(App.state.year) * 100, 0)} % Eis von 1970`
+        val: () => `${App.fmt(gcube.frac(App.state.year) * 100, 0)} % of 1970 ice`
       })));
     } else labels.clear();
     yearLabels();
@@ -199,7 +199,7 @@ window.CubeView = (function () {
     const y = hit ? hit.point.clone().applyMatrix4(new THREE.Matrix4().copy(obj.group.matrixWorld).invert()).y : null;
     const yr = y != null ? obj.yearAtHeight(y) : null;
     if (yr !== hoverYear) { hoverYear = yr; relight(); }
-    if (yr) App.showTip(`<b>${yr}</b>, ${valueText(yr)}${D.hotSummers[yr] ? '<br><span class="t-hot">Heisser Sommer</span>' : ""}<br><span class="t-dim">Klicken, um die Ebene festzuhalten</span>`, e);
+    if (yr) App.showTip(`<b>${yr}</b>, ${valueText(yr)}${D.hotSummers[yr] ? '<br><span class="t-hot">Hot summer</span>' : ""}<br><span class="t-dim">Click to pin this layer</span>`, e);
     else App.hideTip();
   }
   function onLeave() { if (hoverYear) { hoverYear = null; relight(); } App.hideTip(); }
@@ -261,7 +261,7 @@ window.CubeView = (function () {
       if (what === "route") setMode(s.mode);
       else updateYear();
       App.$("pin-bar").hidden = !(big() && pinned.size);
-      App.$("pin-count").textContent = pinned.size === 1 ? "1 Ebene festgehalten" : pinned.size + " Ebenen festgehalten";
+      App.$("pin-count").textContent = pinned.size === 1 ? "1 layer pinned" : pinned.size + " layers pinned";
     });
     updateYear();
   }
