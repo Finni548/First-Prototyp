@@ -10,12 +10,12 @@
    ========================================================================= */
 window.StackView = (function () {
   const D = GLACIER_DATA;
-  const GAP = 2.45, HV = 1.55, NX = 190;
+  const GAP = 2.05, HV = 1.45, NX = 190;
   let stage, root, plates = [], labels, glLabels, vol, hoverPlate = -1, built = false;
   const v3 = new THREE.Vector3();
   const C = () => Scene3D.C;
 
-  const CAM = { theta: 0.6, phi: 1.17, radius: 52, target: [0, 4.1, 0], shift: 0.05 };
+  const CAM = { theta: 0.6, phi: 1.17, radius: 40, target: [0.35, 3.45, 0], shift: 0.06 };
 
   // ---------------- Ebenen ----------------
   function relief(extra = {}) {
@@ -140,7 +140,7 @@ window.StackView = (function () {
       p.r.group.add(p.ring);
     });
     // Abstand: Volumen unten, darüber gleichmässig die Karten-Ebenen
-    const top0 = HV + 1.7;
+    const top0 = HV + 1.45;
     plates.filter((p) => !p.isVol).forEach((p, i, arr) => { p.y = top0 + (arr.length - 1 - i) * GAP; p.r.group.position.y = p.y; });
     plates.find((p) => p.isVol).y = 0;
 
@@ -195,7 +195,7 @@ window.StackView = (function () {
     const w = stage.container.clientWidth, h = stage.container.clientHeight;
     const svg = labels.querySelector(".sk-lines");
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    const colX = w - 236;
+    const colX = w - 200;
     let out = "", lastBottom = -1e9;
     plates.forEach((p) => {
       // rechteste Ecke der Ebene auf dem Bildschirm
@@ -210,7 +210,8 @@ window.StackView = (function () {
       p.el.style.transform = `translate(${colX}px, ${top}px)`;
       lastBottom = top + lh;
       const ly = top + 9;
-      out += `<path d="M${best.x + 6},${best.y} L${colX - 34},${best.y} L${colX - 14},${ly}" class="${p.el.classList.contains("on") ? "on" : ""}"/><circle cx="${best.x + 3}" cy="${best.y}" r="2.2"/>`;
+      const mx = Math.max(best.x + 10, colX - 30);
+      out += `<path d="M${best.x + 6},${best.y} L${mx},${best.y} L${colX - 2},${ly}" class="${p.el.classList.contains("on") ? "on" : ""}"/><circle cx="${best.x + 3}" cy="${best.y}" r="2.2"/>`;
     });
     svg.innerHTML = out;
   }

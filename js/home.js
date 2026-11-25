@@ -32,7 +32,7 @@ window.Home = (function () {
         lede: "Each layer is one year. Hover a layer to highlight it, click to pin it. The cylinders open single glaciers.",
         crumbs: [C("Overview", "home"), C("All glaciers")] },
       glacier: g && { title: g.name,
-        lede: "The area taken apart year by year: each plate shows the terrain as lines, the ice in blue. The highlighted plate is the selected year.",
+        lede: "The area taken apart year by year: each plate shows the terrain as lines and the ice as a blue area. The highlighted plate is the selected year.",
         crumbs: [C("Overview", "home"), C("All glaciers", "cube"), C(g.name)] },
       map: { title: "Glacier map",
         lede: "Pick a glacier to open its area. Drag to rotate the map, scroll to zoom.",

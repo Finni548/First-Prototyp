@@ -11,10 +11,10 @@
 window.GlacierView = (function () {
   const D = GLACIER_DATA;
   const YEARS = [1970, 1985, 2000, 2015];          // + gewähltes Jahr oben
-  const GAP = 1.6, ROWS = 52, ICE_T = 0.3;        // Abstand, Anzahl Linien, Eisdicke (Welt-Einheiten, überhöht)
+  const GAP = 2.0, ROWS = 34, ICE_T = 0.22;        // Abstand, Anzahl Linien, Eisdicke (Welt-Einheiten, überhöht)
   let stage = null, root, g = null, built = null, hover = null;
   const v3 = new THREE.Vector3();
-  const INK = new THREE.Color("#2a2f37"), BLUE = new THREE.Color("#2e48cf"), ICE = new THREE.Color("#5f86e0");
+  const INK = new THREE.Color("#2a2f37"), BLUE = new THREE.Color("#2e48cf"), ICE = new THREE.Color("#2e48cf");
 
   const boxFor = (g) => D.boxFor(g, 0.14, 0.095);
   const yearsShown = () => { const y = App.state.year; return YEARS.includes(y) || y < YEARS[YEARS.length - 1] ? [...YEARS.filter((x) => x !== y), y].sort((a, b) => a - b) : [...YEARS, y]; };
@@ -38,15 +38,26 @@ window.GlacierView = (function () {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: active ? 0.95 : 0.4 }));
+    const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: active ? 1 : 0.6 }));
     const grp = new THREE.Group();
     grp.add(lines);
-    // dünne Platte darunter + Rahmen
+    // deckende Platte darunter: Eisfläche blau eingefärbt, verdeckt die Ebenen dahinter
     const hw = ref.W / 2, hd = ref.DEP / 2;
-    const plate = new THREE.Mesh(new THREE.PlaneGeometry(ref.W, ref.DEP),
-      new THREE.MeshBasicMaterial({ color: active ? 0xdfe6f7 : 0xffffff, transparent: true, opacity: active ? 0.55 : 0.28, depthWrite: false, side: THREE.DoubleSide }));
-    plate.rotation.x = -Math.PI / 2; plate.position.y = -0.02;
+    const pg = new THREE.PlaneGeometry(ref.W, ref.DEP, ref.nx - 1, ref.ny - 1);
+    pg.rotateX(-Math.PI / 2);
+    const paper = new THREE.Color(active ? "#eef2fb" : "#f5f6f7"), iceC = new THREE.Color(active ? "#7f9fea" : "#a9bde6"), tc = new THREE.Color();
+    const pc = new Float32Array(ref.nx * ref.ny * 3);
+    for (let k = 0; k < ref.nx * ref.ny; k++) {
+      tc.copy(paper).lerp(iceC, Math.min(1, (ice.get(k) || 0) * 2.2));
+      pc[k * 3] = tc.r; pc[k * 3 + 1] = tc.g; pc[k * 3 + 2] = tc.b;
+    }
+    pg.setAttribute("color", new THREE.BufferAttribute(pc, 3));
+    const plate = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+    plate.position.y = -0.03;
     grp.add(plate);
+    // dünne Kante der Platte
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(ref.W, 0.06, ref.DEP), new THREE.MeshBasicMaterial({ color: active ? 0xc9d4ef : 0xd9dbdf }));
+    edge.position.y = -0.1; grp.add(edge);
     grp.add(Scene3D.ringLine(hw, hd, -0.02, active ? BLUE : INK, active ? 0.9 : 0.3));
     grp.add(brackets(hw, hd, -0.02, active));
     return { grp, lines };
@@ -91,7 +102,7 @@ window.GlacierView = (function () {
     let minE = 1e9;
     for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++)
       minE = Math.min(minE, Scene3D.elevAt(box.lon0 + (box.lon1 - box.lon0) * i / 10, box.lat0 + (box.lat1 - box.lat0) * j / 10));
-    const ref = Scene3D.buildRelief({ ...box, nx: 120, width: 5.4, vscale: 1.35, floor: minE - 60, base: -0.04, glass: false, shadow: false,
+    const ref = Scene3D.buildRelief({ ...box, nx: 120, width: 5.4, vscale: 0.8, floor: minE - 60, base: -0.04, glass: false, shadow: false,
       border: false, iceExag: 1.4, outsideFade: false, glacierMargin: 0, iceAlt: [1900, 2800], iceAltFloor: 0 });
     built = { group: new THREE.Group(), ref, hw: ref.W / 2, hd: ref.DEP / 2, layers: [] };
     stage.scene.add(built.group);

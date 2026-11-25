@@ -22,8 +22,8 @@ window.CubeView = (function () {
 
   const CAM = {
     overview: { theta: 0.6, phi: 1.12, radius: 17, target: [0, 1.9, 0], shift: 0 },
-    cube:     { theta: 0.55, phi: 1.16, radius: 12.6, target: [0, 1.75, 0], shift: 0 },
-    glacier:  { theta: 0.78, phi: 1.1, radius: 54, target: [0, 1.6, 0], shift: 0.02 }
+    cube:     { theta: 0.55, phi: 1.2, radius: 10.2, target: [0, 1.38, 0], shift: 0.03 },
+    glacier:  { theta: 0.78, phi: 1.12, radius: 57, target: [0, 1.3, 0], shift: 0.02 }
   };
 
   // im Hintergrund / klein dreht sich der Würfel weiter
