@@ -14,30 +14,26 @@
 
 window.GLACIER_DATA = (function () {
   // Gesamtvolumen aller Schweizer Gletscher in km³ (Ende Messjahr)
-  const volume = {
-    1970: 85.0, 1971: 84.6, 1972: 84.7, 1973: 84.3, 1974: 84.4,
-    1975: 84.5, 1976: 84.0, 1977: 84.6, 1978: 85.1, 1979: 85.0,
-    1980: 85.4, 1981: 85.1, 1982: 84.4, 1983: 84.0, 1984: 84.2,
-    1985: 83.6, 1986: 82.9, 1987: 82.8, 1988: 82.2, 1989: 81.5,
-    1990: 80.4, 1991: 79.3, 1992: 78.6, 1993: 78.4, 1994: 77.6,
-    1995: 77.3, 1996: 77.2, 1997: 76.9, 1998: 75.8, 1999: 75.6,
-    2000: 74.9, 2001: 74.7, 2002: 73.9, 2003: 71.1, 2004: 70.2,
-    2005: 69.2, 2006: 67.9, 2007: 67.1, 2008: 66.4, 2009: 65.3,
-    2010: 64.8, 2011: 63.5, 2012: 62.3, 2013: 62.0, 2014: 61.8,
-    2015: 59.9, 2016: 59.0, 2017: 57.6, 2018: 56.1, 2019: 55.0,
-    2020: 54.0, 2021: 53.6, 2022: 50.3, 2023: 48.1, 2024: 46.5,
-    2025: 45.1, 2026: 42.6
-  };
+  // ECHT: GLAMOS Swisswide Mass Balance (release 2025), Volumen Ende hydrologisches Jahr, km³.
+  // 2026 ist noch nicht im Datensatz: GLAMOS-Jahresbericht vom 1.10.2026 meldet rund −5.5 % → vorläufig.
+  const G = window.GLAMOS;
+  const volume = {};
+  Object.keys(G.vol).forEach((y) => { volume[+y] = G.vol[y]; });
+  volume[2026] = +(volume[2025] * (1 - 0.055)).toFixed(3);
+  const chAreaRaw = {};
+  Object.keys(G.area).forEach((y) => { chAreaRaw[+y] = G.area[y]; });
+  chAreaRaw[2026] = chAreaRaw[2025] - (chAreaRaw[2021] - chAreaRaw[2025]) / 4;   // grob fortgeschrieben
+  const PROVISIONAL = 2026;
 
   // Hitzesommer / Rekord-Schmelzjahre – erscheinen orange in der Timeline
   const hotSummers = {
-    2003: "Summer of the century, the biggest ice loss up to then",
+    2003: "Summer of the century: −3.5% of the ice, the biggest loss up to then",
     2015: "Heatwaves in July",
     2018: "Dry, hot summer",
     2019: "Heatwaves in June and July; a farewell ceremony for the Pizol glacier",
-    2022: "Record year: over 6% of the ice lost in one summer",
-    2023: "Second-largest loss; 2022 and 2023 together −10%",
-    2026: "−5.5% in one summer: only 2022 was worse"
+    2022: "Record year: −5.9% of the ice in one summer",
+    2023: "−4.4% after the record year; 2022 and 2023 together almost −10%",
+    2026: "About −5.5% in one summer, second only to 2022 (provisional, GLAMOS report Oct 2026)"
   };
 
   // Ereignisse, die zusätzlich auf der Timeline / Karte erscheinen
@@ -73,6 +69,16 @@ window.GLACIER_DATA = (function () {
     { id: "birch",      name: "Birchgletscher",           canton: "VS", lon: 7.84, lat: 46.40, a1973: 0.6,  a2016: 0.45, goneYear: 2025, goneText: "Collapsed on 28 May 2025" },
     { id: "pizol",      name: "Pizolgletscher",           canton: "SG", lon: 9.39, lat: 46.96, a1973: 0.3,  a2016: 0.1,  goneYear: 2019, goneText: "Officially declared gone in 2019" }
   ];
+
+  // ECHTE Werte aus dem Gletscherinventar (SGI 1973 / 2016 / 2023) übernehmen:
+  // Fläche, Lage (Punkt im Gletscher 2016) und Ausdehnung 1973; dazu die gemessene Längenänderung
+  glaciers.forEach((g) => {
+    const r = G.glaciers[g.id];
+    if (!r) return;
+    Object.assign(g, { sgi: r.sgi, a1973: r.a1973, a2016: r.a2016, a2023: r.a2023, lon: r.lon, lat: r.lat, bbox: r.bbox, coreSites: r.cores });
+    const L = G.length[g.id];
+    if (L && L.gaps <= 5) g.length = L;
+  });
 
   // ECHTE Eiskern-Bohrungen in der Schweiz (Quellen siehe Links)
   const realCores = [
@@ -130,11 +136,29 @@ window.GLACIER_DATA = (function () {
   // Fläche eines Gletschers in Jahr y – folgt der Form der nationalen Volumenkurve
   function area(g, y) {
     if (g.goneYear && y >= g.goneYear) return 0;
-    const v73 = volume[1973], v16 = volume[2016];
-    let f = (volume[y] - v16) / (v73 - v16);   // 1 = Stand 1973, 0 = Stand 2016
-    if (f < 0) f *= 0.5;                       // nach 2016: Fläche schrumpft langsamer als Volumen
-    return Math.max(0.02, g.a2016 + (g.a1973 - g.a2016) * Math.min(f, 1.05));
+    // Stützpunkte = echte Inventare; dazwischen folgt die Kurve der gesamten Gletscherfläche der Schweiz
+    const P = [[1973, g.a1973], [2016, g.a2016], [2023, g.a2023]];
+    const A = (yy) => chAreaRaw[yy];
+    if (y <= 1973) return g.a1973 * A(y) / A(1973);
+    if (y >= 2023) return Math.max(0, g.a2023 - Math.min((g.a2016 - g.a2023) / 7, g.a2023 * 0.025) * (y - 2023));   // eigener Trend 2016–2023 fortgeschrieben (max. 2.5 %/Jahr)
+    const [p, q] = y <= 2016 ? [P[0], P[1]] : [P[1], P[2]];
+    // Anteil des Flächenverlusts der ganzen Schweiz zwischen den beiden Inventaren, der im Jahr y schon passiert ist
+    const s = (A(p[0]) - A(y)) / (A(p[0]) - A(q[0]));
+    return Math.max(0, p[1] + (q[1] - p[1]) * s);
+  }
+  // Längenänderung der Zunge seit 1970 (gemessen, GLAMOS) – null wenn keine Daten
+  function lengthChange(g, y) {
+    const L = g.length; if (!L || y < L.from) return y <= 1970 && L ? 0 : null;
+    return L.cum[Math.min(y, L.to) - L.from];
+  }
+  const chArea = (y) => chAreaRaw[y];
+  // Ausschnitt um einen Gletscher: Mitte = Ausdehnung 1973, gross genug für den ganzen Gletscher
+  function boxFor(g, hLon, hLat) {
+    const b = g.bbox || [g.lon, g.lat, g.lon, g.lat];
+    const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+    const s = Math.max(1, ((b[2] - b[0]) / 2 * 1.18) / hLon, ((b[3] - b[1]) / 2 * 1.18) / hLat);
+    return { lon0: cx - hLon * s, lon1: cx + hLon * s, lat0: cy - hLat * s, lat1: cy + hLat * s };
   }
 
-  return { volume, hotSummers, events, glaciers, realCores, years, FIRST, LAST, V0, BIELERSEE, vol, change, changePct, area };
+  return { volume, hotSummers, events, glaciers, realCores, years, FIRST, LAST, V0, BIELERSEE, vol, change, changePct, area, lengthChange, chArea, boxFor, PROVISIONAL, vanished: G.vanished, inv: G.inv, Q: G.Q };
 })();

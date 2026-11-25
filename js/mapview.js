@@ -30,16 +30,16 @@ window.MapView = (function () {
   // ---------- Bohrkerne eines Gletscher-Gebiets ----------
   // 3 schematische Punkte auf dem Gletscher + echte Bohrungen, falls sie im Gebiet liegen
   function coresFor(g) {
-    const box = boxFor(g), s = Math.max(0.6, Math.sqrt(g.a1973) / 9);
-    const list = [[0, 0], [-0.03, 0.012], [0.028, -0.016]].map(([dl, db], i) => ({
-      id: "k" + (i + 1), name: "Ice core " + (i + 1), lon: g.lon + dl * s, lat: g.lat + db * s, real: false
-    }));
+    const box = boxFor(g);
+    // schematische Bohrstellen liegen im Eis von 2023 (aus dem Gletscherinventar berechnet)
+    const sites = g.coreSites || [[g.lon, g.lat]];
+    const list = sites.map(([lon, lat], i) => ({ id: "k" + (i + 1), name: "Ice core " + (i + 1), lon, lat, real: false }));
     D.realCores.forEach((c) => {
       if (c.lon > box.lon0 && c.lon < box.lon1 && c.lat > box.lat0 && c.lat < box.lat1) list.push({ ...c, real: true });
     });
     return list;
   }
-  const boxFor = (g) => ({ lon0: g.lon - 0.16, lon1: g.lon + 0.16, lat0: g.lat - 0.11, lat1: g.lat + 0.11 });
+  const boxFor = (g) => D.boxFor(g, 0.16, 0.11);
 
   function buildArea(g) {
     if (area) stage.scene.remove(area.r.group);
@@ -70,7 +70,7 @@ window.MapView = (function () {
       labels.set(dio.glaciers.map((o) => ({
         id: o.g.id, name: o.g.name, rank: o.g.a1973, small: o.g.a1973 < 8,
         pos: () => v.set(o.x, o.y + 0.02, o.z).clone(),
-        val: () => { const a = D.area(o.g, App.state.year); return a > 0 ? App.fmt(a) + " km²" : "verschwunden " + o.g.goneYear; },
+        val: () => { const a = D.area(o.g, App.state.year); return a > 0 ? App.fmt(a) + " km²" : "gone in " + o.g.goneYear; },
         gone: () => D.area(o.g, App.state.year) <= 0
       })));
     } else if (mode === "area" && area) {
@@ -85,7 +85,7 @@ window.MapView = (function () {
   function onRoute(s) {
     const mode = s.mode;
     const own = ["map", "area", "probe"].includes(mode);
-    stage.active = mode !== "glacier";
+    stage.active = mode !== "glacier" && mode !== "overview";
     if ((mode === "area" || mode === "probe") && areaId !== s.glacier) buildArea(App.glacierById(s.glacier));
     const showArea = mode === "area" || mode === "probe";
     dio.group.visible = !showArea;

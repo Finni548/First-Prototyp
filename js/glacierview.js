@@ -16,7 +16,7 @@ window.GlacierView = (function () {
   const v3 = new THREE.Vector3();
   const INK = new THREE.Color("#2a2f37"), BLUE = new THREE.Color("#2e48cf"), ICE = new THREE.Color("#5f86e0");
 
-  const boxFor = (g) => ({ lon0: g.lon - 0.14, lon1: g.lon + 0.14, lat0: g.lat - 0.095, lat1: g.lat + 0.095 });
+  const boxFor = (g) => D.boxFor(g, 0.14, 0.095);
   const yearsShown = () => { const y = App.state.year; return YEARS.includes(y) || y < YEARS[YEARS.length - 1] ? [...YEARS.filter((x) => x !== y), y].sort((a, b) => a - b) : [...YEARS, y]; };
 
   // ---------- eine Ebene: Profillinien des Geländes + Eis ----------
@@ -180,7 +180,7 @@ window.GlacierView = (function () {
     });
     const yr = App.state.year, a = D.area(g, yr), a0 = D.area(g, D.FIRST);
     const p = document.createElement("p"); p.className = "ex-note";
-    p.textContent = a > 0 ? `${App.signed(a - a0)} km² since 1970. Areas are approximations, ice thickness is modelled.` : `${g.goneText}.`;
+    p.textContent = a > 0 ? `${App.signed(a - a0)} km² since 1970. Outlines from the Swiss Glacier Inventory 1973, 2016 and 2023, years in between interpolated. Ice thickness is modelled.` : `${g.goneText}.`;
     side.appendChild(p);
     mark();
   }

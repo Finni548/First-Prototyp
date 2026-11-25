@@ -65,7 +65,7 @@ window.App = (function () {
       $("hero-vol").textContent = a > 0 ? fmt(a) : "0";
       $("hero-unit").textContent = "km²";
       $("hero-bar").style.width = (a / a0 * 100) + "%";
-      $("hero-sub").textContent = a > 0 ? `${fmt(a / a0 * 100, 0)}% of the 1970 area left (approximation).` : g.goneText + ".";
+      $("hero-sub").textContent = a > 0 ? `${fmt(a / a0 * 100, 0)}% of the 1970 area left (between the inventories 1973, 2016 and 2023 interpolated).` : g.goneText + ".";
       $("loss-total").textContent = signed(a - a0) + " km²";
       $("loss-year").textContent = y === D.FIRST ? "First year" : signed(a - prev, 2) + " km²";
     } else {
@@ -80,12 +80,16 @@ window.App = (function () {
       $("loss-total").textContent = signed(lost) + " km³";
       $("loss-year").textContent = y === D.FIRST ? "First year" : `${signed(D.change(y))} km³ (${signed(D.changePct(y))}%)`;
     }
+    const L = g ? D.lengthChange(g, y) : null;
+    $("row-len").hidden = L == null;
+    if (L != null) $("loss-len").textContent = L === 0 ? "0 m" : `${signed(L, 0)} m${y > g.length.to ? " (until " + g.length.to + ")" : ""}`;
     const hot = D.hotSummers[y], ev = D.events.find((e) => e.year === y);
     const note = $("year-note");
     note.textContent = hot ? "Hot summer: " + hot : ev ? ev.label : "";
     note.classList.toggle("hot", !!hot);
 
     const v = D.vol(y);
+    $("st-gone").textContent = D.vanished.count + " glaciers";
     $("st-pct").textContent = signed(v / D.V0 * 100 - 100, 0) + "%";
     $("st-vol").textContent = fmt(v) + " km³";
     document.querySelectorAll(".yr").forEach((e) => (e.textContent = y));
@@ -118,6 +122,7 @@ window.App = (function () {
     GlacierView.init();
     CubeView.init();
     MapView.init();
+    StackView.init();
     Probe.init();
 
     go(location.hash.replace("#", "") || "home");

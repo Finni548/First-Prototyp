@@ -165,7 +165,7 @@ window.CubeView = (function () {
     stage.orbit.maxR = mode === "glacier" ? 70 : 30;
     if (gcube) gcube.group.visible = showG;
     cores.forEach((c) => (c.mesh.visible = mode === "cube"));
-    stage.active = mode !== "probe";
+    stage.active = mode !== "probe" && mode !== "overview";
     if (spinning()) spinTarget = 0.18;
     stage.interactive = mode === "cube" || mode === "glacier";
     if (mode === "glacier") labels.clear();

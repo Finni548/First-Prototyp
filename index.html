@@ -46,6 +46,13 @@
         <p class="view-lede" id="view-lede"></p>
       </div>
 
+      <!-- Startseite: ein Block, Karte oben, Cube unten -->
+      <div class="stack" id="stack">
+        <div class="panel-stage" id="stack-stage"></div>
+        <div class="label-layer" id="stack-glabels"></div>
+        <div class="sk-labels" id="stack-labels"></div>
+      </div>
+
       <!-- Karte -->
       <div class="panel panel-map" id="panel-map" role="link" tabindex="0" aria-label="Open map">
         <div class="panel-stage" id="home-map-stage"></div>
@@ -73,12 +80,13 @@
 
       <!-- Text der Übersicht -->
       <div class="home-text card">
-        <p class="lead">The map shows every glacier in its place. The cube gathers all the ice into one block, with one layer per year. Choose a way in.</p>
+        <p class="lead">One block, four layers. On top the map with every glacier, at the bottom all Swiss ice as one block that shrinks year by year. Pick a glacier on the map to open it, or press play.</p>
         <dl class="stats">
           <div><dt>Ice since 1970</dt><dd id="st-pct">−50%</dd></div>
           <div><dt>Left in <span class="yr">2026</span></dt><dd id="st-vol">42.6 km³</dd></div>
-          <div><dt>Vanished 1973–2016</dt><dd>1019 glaciers</dd></div>
+          <div><dt>Vanished 1973–2016</dt><dd id="st-gone">1003 glaciers</dd></div>
         </dl>
+        <p class="src-note">Data: GLAMOS (2025; 2026 provisional), Swiss Glacier Inventory 1973 · 2016 · 2023.</p>
       </div>
 
       <!-- Kernbohrung -->
@@ -115,6 +123,7 @@
       <dl class="rows">
         <div><dt>Since 1970</dt><dd id="loss-total">−42.4 km³</dd></div>
         <div><dt>This year</dt><dd id="loss-year">−2.5 km³</dd></div>
+        <div id="row-len" hidden><dt>Glacier tongue since 1970</dt><dd id="loss-len">–</dd></div>
       </dl>
       <p class="note" id="year-note"></p>
     </aside>
@@ -135,6 +144,7 @@
 </div>
 
 <script src="js/vendor/three.min.js"></script>
+<script src="js/glamos.js"></script>
 <script src="js/data.js"></script>
 <script src="js/switzerland.js"></script>
 <script src="img/berg-cutout.js"></script>
@@ -145,6 +155,7 @@
 <script src="js/glacierview.js"></script>
 <script src="js/cubeview.js"></script>
 <script src="js/mapview.js"></script>
+<script src="js/stackview.js"></script>
 <script src="js/probe.js"></script>
 <script>App.start();</script>
 </body>

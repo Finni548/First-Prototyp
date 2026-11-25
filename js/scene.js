@@ -31,12 +31,29 @@ window.Scene3D = (function () {
   const NX = T.nx, NY = T.ny;
   const KX = 111 * Math.cos(46.8 * Math.PI / 180), KY = 111; // km pro Grad
 
-  function elevAt(lon, lat) {
+  // schematisches Relief (Fallback ausserhalb der Schweiz / ohne Höhenmodell)
+  function elevSchem(lon, lat) {
     const fi = Math.max(0, Math.min(NX - 1.001, (lon - T.lon0) / (T.lon1 - T.lon0) * (NX - 1)));
     const fj = Math.max(0, Math.min(NY - 1.001, (T.lat1 - lat) / (T.lat1 - T.lat0) * (NY - 1)));
     const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, k = j * NX + i;
     const e = (q) => HQ[q] / 255 * T.maxElev;
     return e(k) * (1 - u) * (1 - v) + e(k + 1) * u * (1 - v) + e(k + NX) * (1 - u) * v + e(k + NX + 1) * u * v;
+  }
+  // echtes Höhenmodell (swisstopo DHM25/200), falls js/terrain-dem.js geladen ist
+  const DEM = window.SWISS_DEM ? (() => {
+    const M = window.SWISS_DEM, b = b64(M.h);
+    return { ...M, H: new Uint16Array(b.buffer, b.byteOffset, b.length / 2) };
+  })() : null;
+  function elevAt(lon, lat) {
+    if (!DEM) return elevSchem(lon, lat);
+    const fi = (lon - DEM.lon0) / (DEM.lon1 - DEM.lon0) * (DEM.nx - 1);
+    const fj = (DEM.lat1 - lat) / (DEM.lat1 - DEM.lat0) * (DEM.ny - 1);
+    if (fi < 0 || fj < 0 || fi > DEM.nx - 1.001 || fj > DEM.ny - 1.001) return elevSchem(lon, lat) * 0.6;
+    const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, k = j * DEM.nx + i;
+    const q = [DEM.H[k], DEM.H[k + 1], DEM.H[k + DEM.nx], DEM.H[k + DEM.nx + 1]];
+    if (q[0] && q[1] && q[2] && q[3]) return q[0] * (1 - u) * (1 - v) + q[1] * u * (1 - v) + q[2] * (1 - u) * v + q[3] * u * v;
+    // Rand der Daten: vorhandene Werte mitteln, sonst ausserhalb → flaches, tiefes Umland
+    const ok = q.filter((x) => x); return ok.length ? ok.reduce((a, b) => a + b) / ok.length : elevSchem(lon, lat) * 0.6;
   }
   function maskAt(lon, lat) {
     const i = Math.round((lon - T.lon0) / (T.lon1 - T.lon0) * (NX - 1));
@@ -50,6 +67,116 @@ window.Scene3D = (function () {
   // ===================================================================
   const stages = [];
   const lerp = (a, b, t) => a + (b - a) * t;
+
+  // ===================================================================
+  // Echte Gletscherflächen (SGI 1973 / 2016 / 2023) auf ein Raster legen
+  // ===================================================================
+  const INV_YEARS = ["1973", "2016", "2023"];
+  const ringCache = {};
+  function rings(yr) {
+    if (ringCache[yr]) return ringCache[yr];
+    const Q = D.Q;
+    return (ringCache[yr] = D.inv[yr].map((r) => {
+      const n = r.length / 2, xs = new Float64Array(n), ys = new Float64Array(n);
+      let x = 0, y = 0, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (let i = 0; i < n; i++) {
+        x += r[2 * i]; y += r[2 * i + 1]; xs[i] = x / Q; ys[i] = y / Q;
+        x0 = Math.min(x0, xs[i]); x1 = Math.max(x1, xs[i]); y0 = Math.min(y0, ys[i]); y1 = Math.max(y1, ys[i]);
+      }
+      return { xs, ys, x0, x1, y0, y1 };
+    }));
+  }
+  // Anteil Eis je Gitterpunkt (0..1), per Scanline mit ss×ss Stichproben pro Zelle
+  function iceCoverage(yr, lon0, lon1, lat0, lat1, nx, ny, ss) {
+    const dx = (lon1 - lon0) / (nx - 1), dy = (lat1 - lat0) / (ny - 1);
+    const SX = nx * ss, SY = ny * ss, sdx = dx / ss, sdy = dy / ss;
+    const sLon0 = lon0 - dx / 2 + sdx / 2, sLat1 = lat1 + dy / 2 - sdy / 2;
+    const rows = Array.from({ length: SY }, () => []);
+    rings(yr).forEach((R) => {
+      if (R.x1 < lon0 - dx || R.x0 > lon1 + dx || R.y1 < lat0 - dy || R.y0 > lat1 + dy) return;
+      const n = R.xs.length;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n, ya = R.ys[i], yb = R.ys[j];
+        if (ya === yb) continue;
+        const xa = R.xs[i], xb = R.xs[j], lo = Math.min(ya, yb), hi = Math.max(ya, yb);
+        const b0 = Math.max(0, Math.ceil((sLat1 - hi) / sdy)), b1 = Math.min(SY - 1, Math.floor((sLat1 - lo) / sdy));
+        for (let b = b0; b <= b1; b++) {
+          const lat = sLat1 - b * sdy;
+          if (lat < lo || lat >= hi) continue;
+          rows[b].push(xa + (lat - ya) / (yb - ya) * (xb - xa));
+        }
+      }
+    });
+    const cov = new Float32Array(nx * ny), inc = 1 / (ss * ss);
+    for (let b = 0; b < SY; b++) {
+      const r = rows[b]; if (r.length < 2) continue;
+      r.sort((p, q) => p - q);
+      const jj = Math.floor(b / ss) * nx;
+      for (let k = 0; k + 1 < r.length; k += 2) {
+        const a0 = Math.max(0, Math.ceil((r[k] - sLon0) / sdx)), a1 = Math.min(SX - 1, Math.ceil((r[k + 1] - sLon0) / sdx) - 1);
+        for (let a = a0; a <= a1; a++) cov[jj + Math.floor(a / ss)] += inc;
+      }
+    }
+    return cov;
+  }
+  // vorzeichenbehaftete Distanz zum Eisrand (in Zellen, negativ = im Eis)
+  function signedDist(cov, nx, ny) {
+    const pass = (inside) => {
+      const d = new Float32Array(nx * ny), INF = 1e6, R2 = Math.SQRT2;
+      for (let k = 0; k < d.length; k++) d[k] = ((cov[k] >= 0.5) === inside) ? 0 : INF;
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+        const k = j * nx + i; let v = d[k];
+        if (i > 0) v = Math.min(v, d[k - 1] + 1);
+        if (j > 0) { v = Math.min(v, d[k - nx] + 1); if (i > 0) v = Math.min(v, d[k - nx - 1] + R2); if (i < nx - 1) v = Math.min(v, d[k - nx + 1] + R2); }
+        d[k] = v;
+      }
+      for (let j = ny - 1; j >= 0; j--) for (let i = nx - 1; i >= 0; i--) {
+        const k = j * nx + i; let v = d[k];
+        if (i < nx - 1) v = Math.min(v, d[k + 1] + 1);
+        if (j < ny - 1) { v = Math.min(v, d[k + nx] + 1); if (i < nx - 1) v = Math.min(v, d[k + nx + 1] + R2); if (i > 0) v = Math.min(v, d[k + nx - 1] + R2); }
+        d[k] = v;
+      }
+      return d;
+    };
+    const toIce = pass(true), toRock = pass(false), s = new Float32Array(nx * ny);
+    for (let k = 0; k < s.length; k++) s[k] = cov[k] >= 0.5 ? -(toRock[k] - 0.5) : toIce[k] - 0.5;
+    return s;
+  }
+  // Zeit → zwischen welchen Inventaren, wie weit (folgt der gesamten Gletscherfläche der Schweiz)
+  function invPhase(y) {
+    const A = D.chArea;
+    if (y <= 1973) return { a: 0, b: 1, t: 0 };
+    if (y <= 2016) return { a: 0, b: 1, t: (A(1973) - A(y)) / (A(1973) - A(2016)) };
+    if (y <= 2023) return { a: 1, b: 2, t: (A(2016) - A(y)) / (A(2016) - A(2023)) };
+    return { a: 1, b: 2, t: 1 + (y - 2023) / 7 };
+  }
+  // Eisfeld für einen Ausschnitt: liefert fieldAt(year) → Float32Array (0 = kein Eis, 0.25 = Rand, 1 = dick)
+  function makeIceField(lon0, lon1, lat0, lat1, nx, ny) {
+    const cellKm = (lon1 - lon0) / (nx - 1) * KX;
+    const fine = cellKm < 0.45;
+    const cov = INV_YEARS.map((yr) => iceCoverage(yr, lon0, lon1, lat0, lat1, nx, ny, fine ? 2 : 4));
+    const sdf = fine ? cov.map((c) => signedDist(c, nx, ny)) : null;
+    const RAMP = 3.5;
+    const any = new Uint8Array(nx * ny);
+    for (let k = 0; k < any.length; k++) if (cov[0][k] > 0 || cov[1][k] > 0 || cov[2][k] > 0 || (sdf && (sdf[0][k] < 2 || sdf[1][k] < 2 || sdf[2][k] < 2))) any[k] = 1;
+    return {
+      fine, any,
+      at(y) {
+        const { a, b, t } = invPhase(y), f = new Float32Array(nx * ny);
+        for (let k = 0; k < f.length; k++) {
+          if (!any[k]) continue;
+          if (fine) {
+            const s = sdf[a][k] + (sdf[b][k] - sdf[a][k]) * t;
+            f[k] = Math.max(0, Math.min(1, 0.25 - s / RAMP));
+          } else {
+            const c = cov[a][k] + (cov[b][k] - cov[a][k]) * Math.min(1, t);
+            f[k] = Math.max(0, Math.min(1, c * 1.6));
+          }
+        }
+        return f;
+      }
+    };
+  }
 
   function createStage(container, opt = {}) {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -316,32 +443,19 @@ window.Scene3D = (function () {
     if (glass) group.add(glass);
     if (shadow) group.add(shadow);
 
-    // ---- Eisflächen ----
-    const EXAG = opt.iceExag || 2.4;
+    // ---- Eisflächen: echte Umrisse aus dem Gletscherinventar ----
     const margin = opt.glacierMargin ?? 0.15;
-    const [aLo, aHi] = opt.iceAlt || [1500, 2700], aFloor = opt.iceAltFloor ?? 0.35;
     const gl = D.glaciers
       .filter((g) => g.lon > lon0 - margin && g.lon < lon1 + margin && g.lat > lat0 - margin && g.lat < lat1 + margin)
-      .map((g) => {
-        const x = lonToX(g.lon), z = latToZ(g.lat);
-        const rMax = Math.sqrt(g.a1973 / Math.PI) * KM * EXAG * 1.15;
-        const verts = [];
-        const i0 = Math.round((x + W / 2) / W * (nx - 1)), j0 = Math.round((z + DEP / 2) / DEP * (ny - 1));
-        const span = Math.ceil(rMax / (W / (nx - 1))) + 2;
-        for (let j = Math.max(0, j0 - span); j <= Math.min(ny - 1, j0 + span); j++)
-          for (let i = Math.max(0, i0 - span); i <= Math.min(nx - 1, i0 + span); i++) {
-            const k = j * nx + i, d = Math.hypot(pos.getX(k) - x, pos.getZ(k) - z);
-            if (d <= rMax && MK[k] !== 2) verts.push([k, d, EL[k]]);
-          }
-        return { g, x, z, y: heightAt(g.lon, g.lat), verts };
-      });
-    const touched = new Set(); gl.forEach((o) => o.verts.forEach((v) => touched.add(v[0])));
+      .map((g) => ({ g, x: lonToX(g.lon), z: latToZ(g.lat), y: heightAt(g.lon, g.lat) }));
+    const field = makeIceField(lon0, lon1, lat0, lat1, nx, ny);
+    const touched = []; for (let k = 0; k < N; k++) if (field.any[k] && MK[k] !== 2) touched.push(k);
 
     // blaue Eis-Umrisslinie (Marching Squares auf dem Eis-Feld)
     let lastIce = new Map(), outline = null;
     function drawIceOutline(ice) {
       if (outline) { group.remove(outline); outline.geometry.dispose(); }
-      const out = [], lv = 0.35;
+      const out = [], lv = 0.24;
       for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
         const k = [j * nx + i, j * nx + i + 1, (j + 1) * nx + i + 1, (j + 1) * nx + i];
         const f = k.map((q) => ice.get(q) || 0);
@@ -363,29 +477,20 @@ window.Scene3D = (function () {
     }
 
     function setYear(year) {
-      const ice = new Map();
-      gl.forEach((o) => {
-        const a = D.area(o.g, year);
-        if (a <= 0) return;
-        const r = Math.sqrt(a / Math.PI) * KM * EXAG;
-        o.verts.forEach(([k, d, e]) => {
-          const alt = Math.min(1, Math.max(aFloor, (e - aLo) / (aHi - aLo)));
-          const f = Math.max(0, Math.min(1, (r - d) / (r * 0.35 + 0.02))) * alt;
-          if (f > (ice.get(k) || 0)) ice.set(k, f);
-        });
-      });
+      const f = field.at(year), ice = new Map();
+      touched.forEach((k) => { if (f[k] > 0) ice.set(k, f[k]); });
       lastIce = ice;
       if (opt.iceOutline) drawIceOutline(ice);
       touched.forEach((k) => {
         const f = ice.get(k) || 0;
         tmp.setRGB(base[k * 3], base[k * 3 + 1], base[k * 3 + 2]);
-        if (f > 0) tmp.lerp(C.ice.clone().lerp(C.iceHi, Math.min(1, EL[k] / 4200)), Math.min(1, f * 1.4));
+        if (f > 0) tmp.lerp(C.ice.clone().lerp(C.iceHi, Math.min(1, EL[k] / 4200)), Math.min(1, f * 1.6));
         col.setXYZ(k, tmp.r, tmp.g, tmp.b);
       });
       col.needsUpdate = true;
     }
 
-    return { group, setYear, glaciers: gl, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat, glass, shadow, EL, nx, ny, Y: (k) => pos.getY(k), X: (k) => pos.getX(k), Z: (k) => pos.getZ(k), iceField: () => lastIce, eRange: () => { let a = 1e9, b = -1e9; EL.forEach((e) => { a = Math.min(a, e); b = Math.max(b, e); }); return [a, b]; } };
+    return { group, setYear, glaciers: gl, col, baseCol: base, MK, field, solid, W, DEP, BASE, lonToX, latToZ, heightAt, terrainMat, glass, shadow, EL, nx, ny, Y: (k) => pos.getY(k), X: (k) => pos.getX(k), Z: (k) => pos.getZ(k), iceField: () => lastIce, eRange: () => { let a = 1e9, b = -1e9; EL.forEach((e) => { a = Math.min(a, e); b = Math.max(b, e); }); return [a, b]; } };
   }
 
   // ===================================================================
@@ -561,5 +666,5 @@ window.Scene3D = (function () {
     return { set, refresh, place, clear: () => { layer.innerHTML = ""; items = []; } };
   }
 
-  return { createStage, buildRelief, buildIceCube, makeCore, glassBox, ringLine, groundShadow, createLabels, elevAt, C, KX, KY };
+  return { makeIceField, createStage, buildRelief, buildIceCube, makeCore, glassBox, ringLine, groundShadow, createLabels, elevAt, C, KX, KY };
 })();
